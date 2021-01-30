@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -25,6 +26,7 @@ namespace KLCEx {
 
         private ViewModel model;
         private string authToken;
+        private bool useMITM = false;
 
         public MainWindow() {
             model = new ViewModel();
@@ -37,9 +39,11 @@ namespace KLCEx {
             string savedAuthToken = KaseyaAuth.GetStoredAuth();
             if (savedAuthToken != null) {
                 authToken = savedAuthToken;
-
                 ConnectLMS();
             }
+
+            if (!File.Exists(@"C:\Program Files\Kaseya Live Connect-MITM\KaseyaLiveConnect.exe"))
+                chkUseMITM.Visibility = Visibility.Hidden;
         }
 
         private void menuLoadToken_Click(object sender, RoutedEventArgs e) {
@@ -79,66 +83,6 @@ namespace KLCEx {
             stackFilter.Opacity = 1.0;
         }
 
-        private void btnConnectAlt_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
-            if (agent == null)
-                return;
-
-            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
-            command.Launch(true, false);
-        }
-
-        private void btnConnectLC_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
-            if (agent == null)
-                return;
-
-            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
-            command.SetForLiveConnect();
-            command.Launch(false, false);
-        }
-
-        private void btnConnectRCShared_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
-            if (agent == null)
-                return;
-
-            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
-            command.SetForRemoteControl(false, true);
-
-            string agentName = agent.Name;
-            string agentDWG = agent.DomainWorkgroup;
-            string agentUserLast = agent.UserLast;
-            string agentUserCurrent = agent.UserCurrent;
-
-            //string displayGroup = agentApi["Result"]["MachineGroup"];
-            string displayUser = (agentUserCurrent != "" ? agentUserCurrent : agentUserLast);
-            string displayGWG = "";
-
-            if (agent.OS != "Mac OS X")
-                displayGWG = (agentDWG.Contains("(d") ? "Domain: " : "Workgroup: ") + agentDWG.Substring(0, agentDWG.IndexOf(" ("));
-
-            string[] arrAdmins = new string[] { "administrator", "brandadmin", "adminc", "company" };
-            if (arrAdmins.Contains(displayUser.ToLower())) {
-                command.Launch(false, false);
-            } else {
-                string textConfirm = string.Format("Agent: {0}\r\nUser: {1}\r\n{2}", agentName, displayUser, displayGWG);
-                MessageBoxResult result = MessageBox.Show("Connect to:\r\n\r\n" + textConfirm, "Connecting to " + agentName, MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (result == MessageBoxResult.Yes)
-                    command.Launch(false, false);
-            }
-        }
-
-        private void btnConnectRCPrivate_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
-            if (agent == null)
-                return;
-
-            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
-            command.SetForRemoteControl(true, true);
-            command.Launch(false, false);
-        }
-
         private void txtFilterMachineId_KeyDown(object sender, KeyEventArgs e) {
             if(e.Key == Key.Enter) {
                 searchRefresh();
@@ -151,7 +95,7 @@ namespace KLCEx {
             }
         }
 
-        private void cmbOrg_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+        private void cmbOrg_DropDownClosed(object sender, EventArgs e) {
             searchRefresh();
         }
 
@@ -169,7 +113,7 @@ namespace KLCEx {
 
             //https://vsa-web.company.com.au/api/v1.0/assetmgmt/agents?$top=15&$filter=(MachineGroupId%20eq%2056591821512413912341567131M)%20and%20(ShowToolTip%20lt%20100%20or%20ShowToolTip%20eq%20null)&$orderby=AgentName%20asc
 
-            string filterName = Regex.Replace(txtFilterMachineId.Text, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+            string filterName = Regex.Replace(txtFilterMachineId.Text, "[^a-zA-Z0-9_.-]+", "", RegexOptions.Compiled);
 
             int records = 0;
             int num = 0;
@@ -197,5 +141,100 @@ namespace KLCEx {
             } while (num < records);
         }
 
+        private void btnConnectAltLaunch_Click(object sender, RoutedEventArgs e) {
+            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            if (agent == null)
+                return;
+
+            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
+            command.Launch(true, false);
+        }
+
+        private void btnConnectAltShared_Click(object sender, RoutedEventArgs e) {
+            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            if (agent == null)
+                return;
+
+            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
+            command.SetForRemoteControl(false, true);
+
+            if (ConnectPromptWithAdminBypass(agent))
+                command.Launch(true, false);
+        }
+
+        private void btnConnectAltPrivate_Click(object sender, RoutedEventArgs e) {
+            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            if (agent == null)
+                return;
+
+            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
+            command.SetForRemoteControl(true, true);
+            command.Launch(true, false);
+        }
+
+        private void btnConnectOriginalLiveConnect_Click(object sender, RoutedEventArgs e) {
+            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            if (agent == null)
+                return;
+
+            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
+            command.SetForLiveConnect();
+            command.Launch(false, false);
+        }
+
+        private void btnConnectOriginalShared_Click(object sender, RoutedEventArgs e) {
+            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            if (agent == null)
+                return;
+
+            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
+            command.SetForRemoteControl(false, true);
+
+            if (ConnectPromptWithAdminBypass(agent))
+                command.Launch(false, useMITM);
+        }
+
+        private void btnConnectOriginalPrivate_Click(object sender, RoutedEventArgs e) {
+            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            if (agent == null)
+                return;
+
+            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
+            command.SetForRemoteControl(true, true);
+            command.Launch(false, useMITM);
+        }
+
+        private bool ConnectPromptWithAdminBypass(Machine agent) {
+            string agentName = agent.Name;
+            string agentDWG = agent.DomainWorkgroup;
+            string agentUserLast = agent.UserLast;
+            string agentUserCurrent = agent.UserCurrent;
+
+            //string displayGroup = agentApi["Result"]["MachineGroup"];
+            string displayUser = (agentUserCurrent != "" ? agentUserCurrent : agentUserLast);
+            string displayGWG = "";
+
+            if (agent.OS != "Mac OS X")
+                displayGWG = (agentDWG.Contains("(d") ? "Domain: " : "Workgroup: ") + agentDWG.Substring(0, agentDWG.IndexOf(" ("));
+
+            MessageBoxResult result;
+            string[] arrAdmins = new string[] { "administrator", "brandadmin", "adminc", "company" };
+            if (arrAdmins.Contains(displayUser.ToLower())) {
+                result = MessageBoxResult.Yes;
+            } else {
+                string textConfirm = string.Format("Agent: {0}\r\nUser: {1}\r\n{2}", agentName, displayUser, displayGWG);
+                result = MessageBox.Show("Connect to:\r\n\r\n" + textConfirm, "Connecting to " + agentName, MessageBoxButton.YesNo, MessageBoxImage.Question);
+            }
+
+            return (result == MessageBoxResult.Yes);
+        }
+
+        private void chkUseMITM_Checked(object sender, RoutedEventArgs e) {
+            useMITM = true;
+        }
+
+        private void chkUseMITM_Unchecked(object sender, RoutedEventArgs e) {
+            useMITM = false;
+        }
     }
 }

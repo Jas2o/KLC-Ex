@@ -33,7 +33,7 @@
                 <ComboBox x:Name="cmbOrg" HorizontalAlignment="Left" VerticalAlignment="Center" Width="208" IsEditable="True"
                       ItemsSource="{Binding Source={StaticResource mgs}}"
                       DisplayMemberPath="GroupNameDisplay"
-                      SelectedValuePath="GroupName" SelectionChanged="cmbOrg_SelectionChanged" Margin="5,0,0,0" KeyDown="cmbOrg_KeyDown" />
+                      SelectedValuePath="GroupName" Margin="5,0,0,0" KeyDown="cmbOrg_KeyDown" DropDownClosed="cmbOrg_DropDownClosed" />
                 <CheckBox x:Name="chkFilterGroupSub" Content="Sub" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True"/>
                 <Button x:Name="btnFilterRefresh" Content="Refresh" HorizontalAlignment="Left" VerticalAlignment="Center" Click="btnFilterRefresh_Click" Margin="5,0,0,0"/>
             </StackPanel>
@@ -49,10 +49,15 @@
                 </DataGrid.Columns>
             </DataGrid>
             <StackPanel Grid.Column="1" Orientation="Vertical" Grid.Row="1" Margin="5,0,0,0">
-                <Button x:Name="btnConnectAlt_Copy" Content="KLCAlt" VerticalAlignment="Top" IsTabStop="False" Click="btnConnectAlt_Click" Margin="0,0,0,5"/>
-                <Button x:Name="btnConnectLC" Content="Live Connect" VerticalAlignment="Top" IsTabStop="False" Click="btnConnectLC_Click" Margin="0,0,0,5"/>
-                <Button x:Name="btnConnectRCShared" Content="RC Shared" VerticalAlignment="Top" IsTabStop="False" Click="btnConnectRCShared_Click" Margin="0,0,0,5"/>
-                <Button x:Name="btnConnectRCPrivate" Content="RC Private" VerticalAlignment="Top" IsTabStop="False" Click="btnConnectRCPrivate_Click" Margin="0,0,0,5"/>
+                <Button x:Name="btnConnectAltLaunch" Content="Alternative" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectAltLaunch_Click"/>
+                <Button x:Name="btnConnectAltShared" Content="Shared" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectAltShared_Click"/>
+                <Button x:Name="btnConnectAltPrivate" Content="Private" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectAltPrivate_Click"/>
+                
+                <Button x:Name="btnConnectOriginalLiveConnect" Content="Live Connect" VerticalAlignment="Top" IsTabStop="False" Margin="0,10,0,5" Click="btnConnectOriginalLiveConnect_Click"/>
+                <Button x:Name="btnConnectOriginalShared" Content="Shared" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectOriginalShared_Click"/>
+                <Button x:Name="btnConnectOriginalPrivate" Content="Private" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectOriginalPrivate_Click"/>
+                <CheckBox x:Name="chkUseMITM" Content="Use MITM" Checked="chkUseMITM_Checked" Unchecked="chkUseMITM_Unchecked"/>
+
             </StackPanel>
             <!--<TextBox x:Name="txtMachines" Grid.Row="1" TextWrapping="Wrap" FontFamily="Consolas"/>-->
 
