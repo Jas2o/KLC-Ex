@@ -39,14 +39,53 @@
             </StackPanel>
             <DataGrid x:Name="dataGridAgents" ItemsSource="{Binding ListMachine, Mode=OneWay}" IsReadOnly="True" Grid.Row="1" AutoGenerateColumns="False">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding Status, FallbackValue=Status}" Header="Status"/>
+                    <DataGridTextColumn Binding="{Binding DisplayStatus, FallbackValue=Status}" Header="Status"/>
                     <DataGridTextColumn Binding="{Binding OS, FallbackValue=OS}" Header="OS"/>
-                    <DataGridTextColumn Binding="{Binding Name, FallbackValue=Name}" Header="Name"/>
-                    <DataGridTextColumn Binding="{Binding User, FallbackValue=User}" Header="User"/>
-                    <DataGridTextColumn Binding="{Binding CheckInLast, FallbackValue=CheckInLast}" Header="CheckInLast"/>
-                    <DataGridTextColumn Binding="{Binding RebootLast, FallbackValue=RebootLast}" Header="RebootLast"/>
+                    <DataGridTextColumn Binding="{Binding ComputerName, FallbackValue=Name}" Header="Name"/>
+                    <DataGridTextColumn Binding="{Binding MachineGroup, FallbackValue=Group}" Header="Group"/>
+                    <DataGridTextColumn Binding="{Binding DisplayUser, FallbackValue=User}" Header="User"/>
+                    <DataGridTextColumn Binding="{Binding CheckInLast, StringFormat=\{0:yyyy-MM-dd - hh:mm tt\}}" Header="CheckInLast"/>
+                    <DataGridTextColumn Binding="{Binding RebootLast, StringFormat=\{0:yyyy-MM-dd - hh:mm tt\}}" Header="RebootLast"/>
                     <DataGridTextColumn Binding="{Binding AgentVersion, FallbackValue=AgentVersion}" Header="AgentVersion"/>
                 </DataGrid.Columns>
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding DisplayStatus}" Value="Down"/>
+                                    <Condition Binding="{Binding Column.Header,RelativeSource={RelativeSource Self}}" Value="Status"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Background" Value="#FF8A8A8A"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding DisplayStatus}" Value="Online"/>
+                                    <Condition Binding="{Binding Column.Header,RelativeSource={RelativeSource Self}}" Value="Status"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Background" Value="#FF98C97C"/>
+                                <Setter Property="Foreground" Value="Black"/>
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding DisplayStatus}" Value="UserIdle"/>
+                                    <Condition Binding="{Binding Column.Header,RelativeSource={RelativeSource Self}}" Value="Status"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Background" Value="#FFFFD225"/>
+                                <Setter Property="Foreground" Value="Black"/>
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding DisplayStatus}" Value="UserActive"/>
+                                    <Condition Binding="{Binding Column.Header,RelativeSource={RelativeSource Self}}" Value="Status"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Background" Value="#FF1EA4F7"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.CellStyle>
             </DataGrid>
             <StackPanel Grid.Column="1" Orientation="Vertical" Grid.Row="1" Margin="5,0,0,0">
                 <Button x:Name="btnConnectAltLaunch" Content="Alternative" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectAltLaunch_Click"/>
