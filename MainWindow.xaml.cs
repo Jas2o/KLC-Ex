@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -37,6 +38,9 @@ namespace KLCEx {
 
         private void Window_Loaded(object sender, RoutedEventArgs e) {
             string savedAuthToken = KaseyaAuth.GetStoredAuth();
+            string[] args = Environment.GetCommandLineArgs();
+            if (args.Length > 1 && args[1].Contains("klcex:"))
+                savedAuthToken = string.Join("", args[1].ToCharArray().Where(Char.IsDigit));
             if (savedAuthToken != null) {
                 authToken = savedAuthToken;
                 ConnectLMS();
@@ -61,6 +65,72 @@ namespace KLCEx {
                 ConnectLMS();
             }
         }
+
+        #region Launch
+        public enum LaunchMethod {
+            System,
+            DirectKaseya,
+            DirectKaseyaMITM,
+            DirectAlternative
+        }
+
+        public enum LaunchAction {
+            LiveConnect,
+            RemoteControlShared,
+            RemoteControlPrivate,
+            Terminal
+        }
+
+        public void Launch(Machine agent, LaunchMethod method, LaunchAction action) {
+            if (agent == null)
+                return;
+
+            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
+            //LiveConnect is default
+            if (action == LaunchAction.RemoteControlShared) {
+                command.SetForRemoteControl(false, true);
+                if (!ConnectPromptWithAdminBypass(agent))
+                    return;
+            } else if (action == LaunchAction.RemoteControlPrivate)
+                command.SetForRemoteControl(true, true);
+            else if (action == LaunchAction.Terminal)
+                command.SetForTerminal(agent.OS == "Mac OS X");
+
+            if (method == LaunchMethod.System)
+                Process.Start("kaseyaliveconnect:///" + Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(command))));
+            else if (method == LaunchMethod.DirectKaseya)
+                command.Launch(false, false);
+            else if (method == LaunchMethod.DirectKaseyaMITM)
+                command.Launch(false, true);
+            else if (method == LaunchMethod.DirectAlternative)
+                command.Launch(true, false);
+        }
+
+        private bool ConnectPromptWithAdminBypass(Machine agent) {
+            string agentName = agent.ComputerName;
+            string agentDWG = agent.DomainWorkgroup;
+            string agentUserLast = agent.UserLast;
+            string agentUserCurrent = agent.UserCurrent;
+
+            //string displayGroup = agentApi["Result"]["MachineGroup"];
+            string displayUser = (agentUserCurrent != "" ? agentUserCurrent : agentUserLast);
+            string displayGWG = "";
+
+            if (agent.OS != "Mac OS X")
+                displayGWG = (agentDWG.Contains("(d") ? "Domain: " : "Workgroup: ") + agentDWG.Substring(0, agentDWG.IndexOf(" ("));
+
+            MessageBoxResult result;
+            string[] arrAdmins = new string[] { "administrator", "brandadmin", "adminc", "company" };
+            if (arrAdmins.Contains(displayUser.ToLower())) {
+                result = MessageBoxResult.Yes;
+            } else {
+                string textConfirm = string.Format("Agent: {0}\r\nUser: {1}\r\n{2}", agentName, displayUser, displayGWG);
+                result = MessageBox.Show("Connect to:\r\n\r\n" + textConfirm, "Connecting to " + agentName, MessageBoxButton.YesNo, MessageBoxImage.Question);
+            }
+
+            return (result == MessageBoxResult.Yes);
+        }
+        #endregion
 
         private void ConnectLMS() {
             //api/v1.0/system/machinegroups?$top=5&$filter=(substringof(%27ramvek%27,tolower(MachineGroupName))%20eq%20true)&$orderby=MachineGroupName%20asc
@@ -141,93 +211,63 @@ namespace KLCEx {
             } while (num < records);
         }
 
-        private void btnConnectAltLaunch_Click(object sender, RoutedEventArgs e) {
+        #region Buttons: Launch
+        private void btnConnectLaunch_Click(object sender, RoutedEventArgs e) {
+            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Launch(agent, LaunchMethod.System, LaunchAction.LiveConnect);
+        }
+
+        private void btnConnectShared_Click(object sender, RoutedEventArgs e) {
+            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Launch(agent, LaunchMethod.System, LaunchAction.RemoteControlShared);
+        }
+
+        private void btnConnectPrivate_Click(object sender, RoutedEventArgs e) {
+            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Launch(agent, LaunchMethod.System, LaunchAction.RemoteControlPrivate);
+        }
+
+        private void btnSendToProxy_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
             if (agent == null)
                 return;
 
-            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
-            command.Launch(true, false);
+            Process process = new Process();
+            process.StartInfo.FileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\KLCProxy.exe";
+            process.StartInfo.Arguments = agent.Guid;
+            process.Start();
+        }
+
+        private void btnConnectAltLaunch_Click(object sender, RoutedEventArgs e) {
+            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.LiveConnect);
         }
 
         private void btnConnectAltShared_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
-            if (agent == null)
-                return;
-
-            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
-            command.SetForRemoteControl(false, true);
-
-            if (ConnectPromptWithAdminBypass(agent))
-                command.Launch(true, false);
+            Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlShared);
         }
 
         private void btnConnectAltPrivate_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
-            if (agent == null)
-                return;
-
-            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
-            command.SetForRemoteControl(true, true);
-            command.Launch(true, false);
+            Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlPrivate);
         }
 
         private void btnConnectOriginalLiveConnect_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
-            if (agent == null)
-                return;
-
-            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
-            command.SetForLiveConnect();
-            command.Launch(false, false);
+            Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.LiveConnect);
         }
 
         private void btnConnectOriginalShared_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
-            if (agent == null)
-                return;
-
-            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
-            command.SetForRemoteControl(false, true);
-
-            if (ConnectPromptWithAdminBypass(agent))
-                command.Launch(false, useMITM);
+            Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlShared);
         }
 
         private void btnConnectOriginalPrivate_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
-            if (agent == null)
-                return;
-
-            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
-            command.SetForRemoteControl(true, true);
-            command.Launch(false, useMITM);
+            Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlPrivate);
         }
-
-        private bool ConnectPromptWithAdminBypass(Machine agent) {
-            string agentName = agent.ComputerName;
-            string agentDWG = agent.DomainWorkgroup;
-            string agentUserLast = agent.UserLast;
-            string agentUserCurrent = agent.UserCurrent;
-
-            //string displayGroup = agentApi["Result"]["MachineGroup"];
-            string displayUser = (agentUserCurrent != "" ? agentUserCurrent : agentUserLast);
-            string displayGWG = "";
-
-            if (agent.OS != "Mac OS X")
-                displayGWG = (agentDWG.Contains("(d") ? "Domain: " : "Workgroup: ") + agentDWG.Substring(0, agentDWG.IndexOf(" ("));
-
-            MessageBoxResult result;
-            string[] arrAdmins = new string[] { "administrator", "brandadmin", "adminc", "company" };
-            if (arrAdmins.Contains(displayUser.ToLower())) {
-                result = MessageBoxResult.Yes;
-            } else {
-                string textConfirm = string.Format("Agent: {0}\r\nUser: {1}\r\n{2}", agentName, displayUser, displayGWG);
-                result = MessageBox.Show("Connect to:\r\n\r\n" + textConfirm, "Connecting to " + agentName, MessageBoxButton.YesNo, MessageBoxImage.Question);
-            }
-
-            return (result == MessageBoxResult.Yes);
-        }
+        #endregion
 
         private void chkUseMITM_Checked(object sender, RoutedEventArgs e) {
             useMITM = true;
