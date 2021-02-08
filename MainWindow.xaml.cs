@@ -108,9 +108,9 @@ namespace KLCEx {
 
         private bool ConnectPromptWithAdminBypass(Machine agent) {
             string agentName = agent.ComputerName;
-            string agentDWG = agent.DomainWorkgroup;
-            string agentUserLast = agent.UserLast;
-            string agentUserCurrent = agent.UserCurrent;
+            string agentDWG = (agent.DomainWorkgroup == null ? "" : agent.DomainWorkgroup);
+            string agentUserLast = (agent.UserLast == null ? "" : agent.UserLast);
+            string agentUserCurrent = (agent.UserCurrent == null ? "" : agent.UserCurrent);
 
             //string displayGroup = agentApi["Result"]["MachineGroup"];
             string displayUser = (agentUserCurrent != "" ? agentUserCurrent : agentUserLast);
