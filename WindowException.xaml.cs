@@ -19,20 +19,22 @@ namespace KLCEx {
     public partial class WindowException : Window {
 
         public Exception Exception { get; private set; }
-        public string ExceptionType { get; private set; }
+        public string ExceptionSource { get; private set; }
+        public string DetailsText { get; private set; }
 
         public WindowException() {
             InitializeComponent();
         }
 
-        public WindowException(Exception ex, string exType) { //, bool allowContinue
+        public WindowException(Exception ex, string source) { //, bool allowContinue
             Exception = ex;
-            ExceptionType = exType;
+            ExceptionSource = source;
+            DetailsText = ExceptionSource + "\r\n" + ex.ToString();
             this.DataContext = this;
-            this.Title = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " Exception";
 
             InitializeComponent();
 
+            this.Title = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + " Exception";
             //btnContinue.Visibility = (allowContinue ? Visibility.Visible : Visibility.Collapsed);
         }
 
