@@ -132,11 +132,12 @@ namespace KLCEx {
         }
         #endregion
 
-        private void ConnectLMS() {
-            //api/v1.0/system/machinegroups?$top=5&$filter=(substringof(%27ramvek%27,tolower(MachineGroupName))%20eq%20true)&$orderby=MachineGroupName%20asc
-
-            model.MachineGroups.Clear();
-            model.MachineGroups.Add(new MachineGroup(null, "< All Groups >", null, null));
+        public delegate void HasConnected();
+        public void UpdateGroups() {
+            Application.Current.Dispatcher.Invoke((Action)delegate {
+                model.MachineGroups.Clear();
+                model.MachineGroups.Add(new MachineGroup(null, "< All Groups >", null, null));
+            });
 
             int records = 0;
             int num = 0;
@@ -145,12 +146,29 @@ namespace KLCEx {
                 dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
                 records = (int)result["TotalRecords"];
                 foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
-                    model.MachineGroups.Add(new MachineGroup(child));
+                    Application.Current.Dispatcher.Invoke((Action)delegate {
+                        model.MachineGroups.Add(new MachineGroup(child));
+                    });
                 }
                 num += 100;
             } while (num < records);
 
-            stackFilter.Opacity = 1.0;
+            Application.Current.Dispatcher.Invoke((Action)delegate {
+                stackFilter.Opacity = 1.0;
+                menuLoadToken.Header = "Load Token";
+            });
+        }
+
+        private void ConnectLMS() {
+            //api/v1.0/system/machinegroups?$top=5&$filter=(substringof(%27ramvek%27,tolower(MachineGroupName))%20eq%20true)&$orderby=MachineGroupName%20asc
+            menuLoadToken.Header = "Loading...";
+
+            Task.Run(() =>
+            {
+                HasConnected callback = new HasConnected(UpdateGroups);
+                KaseyaAuth auth = KaseyaAuth.ApiAuthX(authToken);
+                callback();
+            });
         }
 
         private void txtFilterMachineId_KeyDown(object sender, KeyEventArgs e) {
