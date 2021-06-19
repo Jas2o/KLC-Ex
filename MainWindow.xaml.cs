@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -99,11 +100,11 @@ namespace KLCEx {
             if (method == LaunchMethod.System)
                 Process.Start("kaseyaliveconnect:///" + Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(command))));
             else if (method == LaunchMethod.DirectKaseya)
-                command.Launch(false, false);
+                command.Launch(false, LaunchExtra.None);
             else if (method == LaunchMethod.DirectKaseyaMITM)
-                command.Launch(false, true);
+                command.Launch(false, LaunchExtra.Hawk);
             else if (method == LaunchMethod.DirectAlternative)
-                command.Launch(true, false);
+                command.Launch(true, LaunchExtra.None);
         }
 
         private bool ConnectPromptWithAdminBypass(Machine agent) {
@@ -133,10 +134,17 @@ namespace KLCEx {
         #endregion
 
         public delegate void HasConnected();
-        public void UpdateGroups() {
+        public void UpdateGroupsAndViews() {
             Application.Current.Dispatcher.Invoke((Action)delegate {
+                progressRefresh.IsIndeterminate = true;
+
                 model.MachineGroups.Clear();
                 model.MachineGroups.Add(new MachineGroup(null, "< All Groups >", null, null));
+                cmbOrg.SelectedIndex = 0;
+
+                model.VSAViews.Clear();
+                model.VSAViews.Add(new VSAView("", "< No View >"));
+                cmbView.SelectedIndex = 0;
             });
 
             int records = 0;
@@ -153,19 +161,35 @@ namespace KLCEx {
                 num += 100;
             } while (num < records);
 
+            IRestResponse response2;
+            response2 = Kaseya.GetRequest(authToken, "api/v1.0/system/views");
+            dynamic result2 = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response2.Content);
+            //records = (int)result["TotalRecords"];
+            foreach (Newtonsoft.Json.Linq.JObject child in result2["Result"].Children()) {
+                Application.Current.Dispatcher.Invoke((Action)delegate {
+                    model.VSAViews.Add(new VSAView(child));
+                });
+            }
+
             Application.Current.Dispatcher.Invoke((Action)delegate {
                 stackFilter.Opacity = 1.0;
-                menuLoadToken.Header = "Load Token";
+                if(model.MachineGroups.Count > 1)
+                    menuLoadToken.Header = "Token Loaded";
+                else
+                    menuLoadToken.Header = "Load Token";
+
+                progressRefresh.IsIndeterminate = false;
             });
         }
 
         private void ConnectLMS() {
             //api/v1.0/system/machinegroups?$top=5&$filter=(substringof(%27ramvek%27,tolower(MachineGroupName))%20eq%20true)&$orderby=MachineGroupName%20asc
             menuLoadToken.Header = "Loading...";
+            SetConnectButtons(false);
 
             Task.Run(() =>
             {
-                HasConnected callback = new HasConnected(UpdateGroups);
+                HasConnected callback = new HasConnected(UpdateGroupsAndViews);
                 KaseyaAuth auth = KaseyaAuth.ApiAuthX(authToken);
                 callback();
             });
@@ -193,40 +217,65 @@ namespace KLCEx {
 
         private void searchRefresh() {
             model.ListMachine.Clear();
+            SetConnectButtons(false);
             if (authToken == null)
                 return;
 
+            progressRefresh.IsIndeterminate = true;
             MachineGroup group = (MachineGroup)cmbOrg.SelectedItem;
-            string root = (group != null ? group.GroupName.Replace(".root", "") : "");
-
-            //https://vsa-web.company.com.au/api/v1.0/assetmgmt/agents?$top=15&$filter=(MachineGroupId%20eq%2056591821512413912341567131M)%20and%20(ShowToolTip%20lt%20100%20or%20ShowToolTip%20eq%20null)&$orderby=AgentName%20asc
-
+            VSAView vsaView = (VSAView)cmbView.SelectedItem;
             string filterName = Regex.Replace(txtFilterMachineId.Text, "[^a-zA-Z0-9_.-]+", "", RegexOptions.Compiled);
 
-            int records = 0;
-            int num = 0;
-            do {
-                IRestResponse response;
-                if (group == null || group.GroupId == null) {
-                    response = Kaseya.GetRequest(authToken, "api/v1.0/assetmgmt/agents?$top=50&$filter=substringof('" + filterName + "',%20ComputerName)&$orderby=AgentName%20asc&$skip=" + num);
-                } else {
-                    if (group.GroupName.EndsWith(".root") && chkFilterGroupSub.IsChecked == true) {
-                        response = Kaseya.GetRequest(authToken, "api/v1.0/assetmgmt/agents?$top=50&$filter=endswith(MachineGroup,%20'" + root + "')%20and%20substringof('" + filterName + "',%20ComputerName)&$orderby=AgentName%20asc&$skip=" + num);
-                    } else {
-                        response = Kaseya.GetRequest(authToken, "api/v1.0/assetmgmt/agents?$top=50&$filter=(MachineGroupId%20eq%20" + group.GroupId + "M)%20and%20substringof('" + filterName + "',%20ComputerName)&$orderby=AgentName%20asc&$skip=" + num);
+            BackgroundWorker bw = new BackgroundWorker();
+            //bw.WorkerReportsProgress = true;
+            bw.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args) {
+                string root = (group != null ? group.GroupName.Replace(".root", "") : "");
+
+                //https://vsa-web.company.com.au/api/v1.0/assetmgmt/agents?$top=15&$filter=(MachineGroupId%20eq%2056591821512413912341567131M)%20and%20(ShowToolTip%20lt%20100%20or%20ShowToolTip%20eq%20null)&$orderby=AgentName%20asc
+
+                int records = 0;
+                int num = 0;
+                do {
+                    string query = "api/v1.0/assetmgmt/agents";
+                    if (vsaView != null && vsaView.ViewId != "") {
+                        //GET /assetmgmt/agentsinview/{viewId}
+                        query += "inview/" + vsaView.ViewId;
                     }
-                }
 
-                dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
-                records = (int)result["TotalRecords"];
-                foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
-                    model.ListMachine.Add(new Machine(child));
-                }
-                num += 50;
+                    if (group == null || group.GroupId == null) {
+                        query += "?$top=50&$filter=substringof('" + filterName + "',%20ComputerName)&$orderby=AgentName%20asc&$skip=" + num;
+                    } else {
+                        if (group.GroupName.EndsWith(".root")) { //&& chkFilterGroupSub.IsChecked == true
+                            query += "?$top=50&$filter=endswith(MachineGroup,%20'" + root + "')%20and%20substringof('" + filterName + "',%20ComputerName)&$orderby=AgentName%20asc&$skip=" + num;
+                        } else {
+                            query += "?$top=50&$filter=(MachineGroupId%20eq%20" + group.GroupId + "M)%20and%20substringof('" + filterName + "',%20ComputerName)&$orderby=AgentName%20asc&$skip=" + num;
+                        }
+                    }
 
-                if (num > 150)
-                    break;
-            } while (num < records);
+                    IRestResponse response = Kaseya.GetRequest(authToken, query);
+
+                    dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
+                    if (result["Status"] != "OK")
+                        break;
+                    records = (int)result["TotalRecords"];
+                    Application.Current.Dispatcher.Invoke((Action)delegate {
+                        foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
+                            model.ListMachine.Add(new Machine(child));
+                        }
+                    });
+                    num += 50;
+
+                    if (num > 150)
+                        break;
+                } while (num < records);
+            });
+
+            bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
+            delegate (object o, RunWorkerCompletedEventArgs args) {
+                progressRefresh.IsIndeterminate = false;
+            });
+
+            bw.RunWorkerAsync();
         }
 
         #region Buttons: Launch
@@ -293,6 +342,56 @@ namespace KLCEx {
 
         private void chkUseMITM_Unchecked(object sender, RoutedEventArgs e) {
             useMITM = false;
+        }
+
+        private void dataGridAgents_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            SetConnectButtons(true);
+        }
+
+        private void SetConnectButtons(bool value) {
+            btnConnectLaunch.IsEnabled = value;
+            btnConnectShared.IsEnabled = value;
+            btnConnectPrivate.IsEnabled = value;
+            btnSendToProxy.IsEnabled = value;
+
+            btnConnectAltLaunch.IsEnabled = value;
+            btnConnectAltShared.IsEnabled = value;
+            btnConnectAltPrivate.IsEnabled = value;
+
+            btnConnectOriginalLiveConnect.IsEnabled = value;
+            btnConnectOriginalShared.IsEnabled = value;
+            btnConnectOriginalPrivate.IsEnabled = value;
+        }
+
+        private void menuViewTest_Click(object sender, RoutedEventArgs e) {
+            Application.Current.Dispatcher.Invoke((Action)delegate {
+                model.VSAViews.Clear();
+                model.VSAViews.Add(new VSAView("", "< No View >"));
+            });
+
+            IRestResponse response;
+            response = Kaseya.GetRequest(authToken, "api/v1.0/system/views");
+            dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
+            //records = (int)result["TotalRecords"];
+            foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
+                Application.Current.Dispatcher.Invoke((Action)delegate {
+                    model.VSAViews.Add(new VSAView(child));
+                });
+            }
+
+            //listView = listView.OrderBy(x => x.ViewName).ToList();
+
+            //Console.WriteLine(response.Content);
+        }
+
+        private void cmbView_KeyDown(object sender, KeyEventArgs e) {
+            if (e.Key == Key.Enter) {
+                searchRefresh();
+            }
+        }
+
+        private void cmbView_DropDownClosed(object sender, EventArgs e) {
+            searchRefresh();
         }
     }
 }

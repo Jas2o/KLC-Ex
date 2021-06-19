@@ -35,6 +35,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Rocket4.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CredentialManagement, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\CredentialManagement.1.0.2\lib\net35\CredentialManagement.dll</HintPath>
@@ -69,6 +72,7 @@
     <Compile Include="Machine.cs" />
     <Compile Include="MachineGroup.cs" />
     <Compile Include="ViewModel.cs" />
+    <Compile Include="VSAView.cs" />
     <Compile Include="WindowAuthToken.xaml.cs">
       <DependentUpon>WindowAuthToken.xaml</DependentUpon>
     </Compile>
@@ -122,6 +126,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Notes.txt" />
+    <Resource Include="Rocket4.ico" />
   </ItemGroup>
   <Import Project="..\LibKaseya\LibKaseya.projitems" Label="Shared" />
   <Import Project="..\LibKaseyaAuth\LibKaseyaAuth.projitems" Label="Shared" />

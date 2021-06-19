@@ -5,11 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:KLCEx" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         mc:Ignorable="d"
-        Title="KLCExplorer" Height="450" Width="800" Loaded="Window_Loaded">
+        Title="KLCExplorer" Height="450" Width="800" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <CollectionViewSource x:Key="mgs" Source="{Binding MachineGroups}">
             <CollectionViewSource.SortDescriptions>
                 <scm:SortDescription PropertyName="GroupNameDisplay"/>
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+        <CollectionViewSource x:Key="vvs" Source="{Binding VSAViews}">
+            <CollectionViewSource.SortDescriptions>
+                <scm:SortDescription PropertyName="ViewName"/>
             </CollectionViewSource.SortDescriptions>
         </CollectionViewSource>
     </Window.Resources>
@@ -26,23 +31,34 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition/>
             </Grid.RowDefinitions>
-            <StackPanel x:Name="stackFilter" VerticalAlignment="Top" Orientation="Horizontal" Margin="0,0,0,5" Opacity="0.5">
-                <Label Content="Machine Id:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            <StackPanel x:Name="stackFilter" VerticalAlignment="Top" Orientation="Horizontal" Margin="0,0,0,5" Opacity="0.5" Grid.ColumnSpan="2">
+                <Label Content="Name:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
                 <TextBox x:Name="txtFilterMachineId" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" VerticalAlignment="Center" Width="120" Margin="5,0,0,0" KeyDown="txtFilterMachineId_KeyDown"/>
                 <Label Content="Group:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0,0,0"/>
                 <ComboBox x:Name="cmbOrg" HorizontalAlignment="Left" VerticalAlignment="Center" Width="208" IsEditable="True"
                       ItemsSource="{Binding Source={StaticResource mgs}}"
                       DisplayMemberPath="GroupNameDisplay"
                       SelectedValuePath="GroupName" Margin="5,0,0,0" KeyDown="cmbOrg_KeyDown" DropDownClosed="cmbOrg_DropDownClosed" />
-                <CheckBox x:Name="chkFilterGroupSub" Content="Sub" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True"/>
-                <Button x:Name="btnFilterRefresh" Content="Refresh" HorizontalAlignment="Left" VerticalAlignment="Center" Click="btnFilterRefresh_Click" Margin="5,0,0,0"/>
+                <!--<CheckBox x:Name="chkFilterGroupSub" Content="Sub" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True"/>-->
+
+                <Grid Height="20" VerticalAlignment="Center"  Margin="5,0,0,0">
+                    <ProgressBar x:Name="progressRefresh" />
+                    <Button x:Name="btnFilterRefresh" Content="Refresh" HorizontalAlignment="Center" VerticalAlignment="Center" Click="btnFilterRefresh_Click" Background="{x:Null}" BorderBrush="{x:Null}" />
+                </Grid>
+
+
+                <Label Content="View:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                <ComboBox x:Name="cmbView" HorizontalAlignment="Left" VerticalAlignment="Center" Width="208" IsEditable="True"
+                      ItemsSource="{Binding Source={StaticResource vvs}}"
+                      DisplayMemberPath="ViewName"
+                      SelectedValuePath="ViewId" Margin="5,0,0,0" KeyDown="cmbView_KeyDown" DropDownClosed="cmbView_DropDownClosed"/>
             </StackPanel>
-            <DataGrid x:Name="dataGridAgents" ItemsSource="{Binding ListMachine, Mode=OneWay}" IsReadOnly="True" Grid.Row="1" AutoGenerateColumns="False">
+            <DataGrid x:Name="dataGridAgents" ItemsSource="{Binding ListMachine, Mode=OneWay}" IsReadOnly="True" Grid.Row="1" AutoGenerateColumns="False" SelectionChanged="dataGridAgents_SelectionChanged">
                 <DataGrid.Columns>
                     <DataGridTextColumn Binding="{Binding DisplayStatus, FallbackValue=Status}" Header="Status"/>
                     <DataGridTextColumn Binding="{Binding OS, FallbackValue=OS}" Header="OS"/>
                     <DataGridTextColumn Binding="{Binding ComputerName, FallbackValue=Name}" Header="Name"/>
-                    <DataGridTextColumn Binding="{Binding MachineGroup, FallbackValue=Group}" Header="Group"/>
+                    <DataGridTextColumn Binding="{Binding MachineGroupReverse, FallbackValue=Group}" Header="Group"/>
                     <DataGridTextColumn Binding="{Binding DisplayUser, FallbackValue=User}" Header="User"/>
                     <DataGridTextColumn Binding="{Binding CheckInLast, StringFormat=\{0:yyyy-MM-dd - hh:mm tt\}}" Header="CheckInLast"/>
                     <DataGridTextColumn Binding="{Binding RebootLast, StringFormat=\{0:yyyy-MM-dd - hh:mm tt\}}" Header="RebootLast"/>

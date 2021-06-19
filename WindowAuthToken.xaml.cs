@@ -22,8 +22,8 @@ namespace KLCEx {
         }
 
         public string ResponseText {
-            get { return txtAuthToken.Text; }
-            set { txtAuthToken.Text = value; }
+            get { return txtAuthToken.Password; }
+            set { txtAuthToken.Password = value; }
         }
 
         private void OKButton_Click(object sender, System.Windows.RoutedEventArgs e) {

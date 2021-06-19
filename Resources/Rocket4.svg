@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="256.0px"
+   height="256.0px"
+   viewBox="0 0 256.0 256.0"
+   version="1.1"
+   id="SVGRoot"
+   sodipodi:docname="Rocket4.svg"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview2175"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="px"
+     showgrid="true"
+     inkscape:zoom="2.9647587"
+     inkscape:cx="150.93977"
+     inkscape:cy="124.29342"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="1912"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid2181" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2170">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath65-95">
+      <path
+         d="M 0,0 H 64 V 64 H 0 Z"
+         id="path63-4" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath75-5">
+      <path
+         d="M 0,0 H 64 V 64 H 0 Z"
+         id="path73-4" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath101-7">
+      <path
+         d="M 0,0 H 64 V 64 H 0 Z"
+         id="path99-8" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath111-9">
+      <path
+         d="M 0,0 H 64 V 64 H 0 Z"
+         id="path109-9" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath137-5">
+      <path
+         d="M 0,0 H 64 V 64 H 0 Z"
+         id="path135-7" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath163-9">
+      <path
+         d="M 0,0 H 64 V 64 H 0 Z"
+         id="path161-3" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath205-4">
+      <path
+         d="m 29.383822,-20.638524 45.25527,45.255269 -45.25527,45.25527 -45.255269,-45.25527 z"
+         id="path203-1" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath215-8">
+      <path
+         d="M 27.04059,-26.295434 72.29586,18.959836 27.04059,64.215105 -18.214679,18.959836 Z"
+         id="path213-6" />
+    </clipPath>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g2383"
+       transform="matrix(0.55983652,0,0,0.55983652,80.762848,59.669509)">
+      <path
+         d="m 313.01486,122.05437 c 0,126.27337 -102.3648,228.63817 -228.638175,228.63817 -126.273375,0 -228.638175,-102.3648 -228.638175,-228.63817 0,-126.2733816 102.3648,-228.63818 228.638175,-228.63818 126.273375,0 228.638175,102.3647984 228.638175,228.63818 z"
+         style="display:inline;fill:#729fcf;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:7.14493"
+         id="path25-8"
+         inkscape:export-filename="C:\Users\jas2o\Desktop\Rocket3-512.png"
+         inkscape:export-xdpi="72"
+         inkscape:export-ydpi="72" />
+      <g
+         id="g59-3"
+         transform="matrix(10.666666,0,0,10.666666,-256.95663,-219.27895)"
+         inkscape:export-filename="C:\Users\jas2o\Desktop\Rocket3-512.png"
+         inkscape:export-xdpi="72"
+         inkscape:export-ydpi="72"
+         style="display:inline;fill:#a40000">
+        <g
+           id="g61-62"
+           clip-path="url(#clipPath65-95)"
+           style="fill:#a40000">
+          <path
+             d="m 32.096001,37.681999 c -1.556,1.556 -6.087,12.540001 -6.087,12.540001 -0.665001,1.208 0.33,2.084999 2.593,0.936001 L 36.733002,46.723 c 4.381,-2.435002 5.228,-3.071 5.169998,-8.028 L 41.088001,32.841999 C 40.809002,30.836998 39.308002,30.469 37.752003,32.024998 Z"
+             style="fill:#a40000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path67-5" />
+        </g>
+      </g>
+      <g
+         id="g69-7"
+         transform="matrix(10.666666,0,0,10.666666,-256.95663,-219.27895)"
+         inkscape:export-filename="C:\Users\jas2o\Desktop\Rocket3-512.png"
+         inkscape:export-xdpi="72"
+         inkscape:export-ydpi="72"
+         style="display:inline;fill:#a40000">
+        <g
+           id="g71-3"
+           clip-path="url(#clipPath75-5)"
+           style="fill:#a40000">
+          <path
+             d="m 27.072,32.658001 c -1.555999,1.556 -12.539999,6.087002 -12.539999,6.087002 -1.208001,0.665001 -2.085,-0.330002 -0.936,-2.592999 l 4.434999,-8.131 c 2.435,-4.381001 3.071001,-5.228001 8.028,-5.17 l 5.853001,0.815 c 2.004999,0.279 2.372999,1.780001 0.816999,3.336001 z"
+             style="fill:#a40000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path77-1" />
+        </g>
+      </g>
+      <g
+         id="g95-8"
+         transform="matrix(10.666666,0,0,10.666666,-256.95663,-219.27895)"
+         inkscape:export-filename="C:\Users\jas2o\Desktop\Rocket3-512.png"
+         inkscape:export-xdpi="72"
+         inkscape:export-ydpi="72"
+         style="display:inline;fill:#f57900">
+        <g
+           id="g97-4"
+           clip-path="url(#clipPath101-7)"
+           style="fill:#f57900">
+          <path
+             d="m 21.247,37.544998 c 5.073999,-5.074001 9.337,-3.526001 9.337,-3.526001 0,0 1.548999,4.263001 -3.526001,9.336998 -5.075001,5.073998 -13.291001,8.760002 -13.931,8.119999 C 12.507,50.855 16.172001,42.618999 21.247,37.544998 Z"
+             style="fill:#f57900;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path103-7" />
+        </g>
+      </g>
+      <g
+         id="g105-8"
+         transform="matrix(10.666666,0,0,10.666666,-256.95663,-219.27895)"
+         inkscape:export-filename="C:\Users\jas2o\Desktop\Rocket3-512.png"
+         inkscape:export-xdpi="72"
+         inkscape:export-ydpi="72"
+         style="display:inline;fill:#fce94f">
+        <g
+           id="g107-54"
+           clip-path="url(#clipPath111-9)"
+           style="fill:#fce94f">
+          <path
+             d="m 25.489,33.301998 c 5.074,-5.073999 9.337,-3.526001 9.337,-3.526001 0,0 1.549,4.263001 -3.526001,9.337002 -5.075001,5.074001 -13.291,8.760002 -13.931,8.119999 -0.619998,-0.619999 3.046002,-8.856999 8.120001,-13.931 z"
+             style="fill:#fce94f;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path113-4" />
+        </g>
+      </g>
+      <g
+         id="g133-6"
+         clip-path="url(#clipPath137-5)"
+         transform="matrix(10.666666,0,0,10.666666,-256.95663,-219.27895)"
+         inkscape:export-filename="C:\Users\jas2o\Desktop\Rocket3-512.png"
+         inkscape:export-xdpi="72"
+         inkscape:export-ydpi="72"
+         style="display:inline;fill:#eeeeec">
+        <path
+           d="m 43.633999,35.077999 c -7.810002,7.810001 -19.783001,5.673 -19.783001,5.673 0,0 -2.137001,-11.972 5.673,-19.783001 7.810002,-7.811 19.643002,-8.640999 21.197003,-7.086999 1.507,1.507001 0.723999,13.387001 -7.087002,21.197 z"
+           style="fill:#eeeeec;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           id="path139-6" />
+      </g>
+      <g
+         id="g157-7"
+         transform="matrix(10.666666,0,0,10.666666,-256.95663,-219.27895)"
+         inkscape:export-filename="C:\Users\jas2o\Desktop\Rocket3-512.png"
+         inkscape:export-xdpi="72"
+         inkscape:export-ydpi="72"
+         style="display:inline;fill:#a40000">
+        <g
+           id="g159-1"
+           clip-path="url(#clipPath163-9)"
+           style="fill:#a40000">
+          <path
+             d="m 21.023001,44.993999 c -0.781,0.780999 -1.34,1.487999 -2.121001,0.707001 v 0 c -0.781,-0.780998 -0.074,-1.34 0.707001,-2.120998 l 9.899,-12.728001 c 0.781,-0.781 4.169001,-1.488001 4.949999,-0.707001 v 0 c 0.780998,0.781001 0.074,4.168999 -0.707001,4.950001 z"
+             style="fill:#a40000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path165-8" />
+        </g>
+      </g>
+      <g
+         id="g199-1"
+         transform="matrix(7.5423996,-7.5423996,7.5423996,7.5423996,-322.91716,158.00954)"
+         inkscape:export-filename="C:\Users\jas2o\Desktop\Rocket3-512.png"
+         inkscape:export-xdpi="72"
+         inkscape:export-ydpi="72"
+         style="display:inline;fill:#204a87">
+        <g
+           id="g201-9"
+           clip-path="url(#clipPath205-4)"
+           style="fill:#204a87">
+          <path
+             d="m 43.604,25.15 c 0,2.209139 -1.790861,4 -4,4 -2.209139,0 -4,-1.790861 -4,-4 0,-2.209139 1.790861,-4 4,-4 2.209139,0 4,1.790861 4,4 z"
+             style="fill:#204a87;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path207-7" />
+        </g>
+      </g>
+      <g
+         id="g209-3"
+         transform="matrix(7.5423996,-7.5423996,7.5423996,7.5423996,-262.5769,183.00269)"
+         inkscape:export-filename="C:\Users\jas2o\Desktop\Rocket3-512.png"
+         inkscape:export-xdpi="72"
+         inkscape:export-ydpi="72"
+         style="display:inline;fill:#204a87">
+        <g
+           id="g211-3"
+           clip-path="url(#clipPath215-8)"
+           style="fill:#204a87">
+          <path
+             d="m 47.261002,19.493 c 0,1.10457 -0.895431,2 -2,2 -1.10457,0 -2,-0.89543 -2,-2 0,-1.104569 0.89543,-2 2,-2 1.104569,0 2,0.895431 2,2 z"
+             style="fill:#204a87;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path217-2" />
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

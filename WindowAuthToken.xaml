@@ -13,8 +13,7 @@
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
         <TextBlock TextWrapping="Wrap" VerticalAlignment="Center" Margin="5,0"><Run Text="Token:"/></TextBlock>
-        <TextBox x:Name="txtAuthToken" Height="23" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Margin="5,0"/>
+        <PasswordBox x:Name="txtAuthToken" Height="23" VerticalAlignment="Center" Grid.Column="1" Margin="5,0"/>
         <Button x:Name="btnAuthSave" Content="Load" VerticalAlignment="Center" Grid.Column="2" Margin="5,0" Click="OKButton_Click"/>
-
     </Grid>
 </Window>

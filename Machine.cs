@@ -29,6 +29,7 @@ namespace KLCEx {
         public string AgentVersion { get; private set; }
 
         public string MachineGroup { get; private set; }
+        public string MachineGroupReverse { get; private set; }
         public string DomainWorkgroup { get; private set; }
 
         public Machine(JObject child) {
@@ -46,6 +47,7 @@ namespace KLCEx {
             AgentVersion = (string)child["AgentVersion"];
 
             MachineGroup = (string)child["MachineGroup"];
+            MachineGroupReverse = string.Join(".", MachineGroup.Split('.').Reverse());
             DomainWorkgroup = (string)child["DomainWorkgroup"];
 
             //txtMachines.AppendText(string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\r\n", agentStatus, agentOS, agentName, agentUser, agentCheckInLast, agentRebootLast, agentVersion));
