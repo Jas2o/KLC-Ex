@@ -1,124 +1,258 @@
-﻿<Window x:Class="KLCEx.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:KLCEx" xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
-        mc:Ignorable="d"
-        Title="KLCExplorer" Height="450" Width="800" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen">
+﻿<Window
+    x:Class="KLCEx.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:KLCEx"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+    Title="KLCExplorer"
+    Width="800"
+    Height="450"
+    Loaded="Window_Loaded"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
     <Window.Resources>
         <CollectionViewSource x:Key="mgs" Source="{Binding MachineGroups}">
             <CollectionViewSource.SortDescriptions>
-                <scm:SortDescription PropertyName="GroupNameDisplay"/>
+                <scm:SortDescription PropertyName="GroupNameDisplay" />
             </CollectionViewSource.SortDescriptions>
         </CollectionViewSource>
         <CollectionViewSource x:Key="vvs" Source="{Binding VSAViews}">
             <CollectionViewSource.SortDescriptions>
-                <scm:SortDescription PropertyName="ViewName"/>
+                <scm:SortDescription PropertyName="ViewName" />
             </CollectionViewSource.SortDescriptions>
         </CollectionViewSource>
     </Window.Resources>
     <DockPanel>
         <Menu DockPanel.Dock="Top">
-            <MenuItem x:Name="menuLoadToken" Header="Load Token" Click="menuLoadToken_Click"/>
+            <MenuItem
+                x:Name="menuLoadToken"
+                Click="MenuLoadToken_Click"
+                Header="Load Token" />
         </Menu>
         <Grid Margin="5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="100"/>
+                <ColumnDefinition />
+                <ColumnDefinition Width="100" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition/>
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
             </Grid.RowDefinitions>
-            <StackPanel x:Name="stackFilter" VerticalAlignment="Top" Orientation="Horizontal" Margin="0,0,0,5" Opacity="0.5" Grid.ColumnSpan="2">
-                <Label Content="Name:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                <TextBox x:Name="txtFilterMachineId" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" VerticalAlignment="Center" Width="120" Margin="5,0,0,0" KeyDown="txtFilterMachineId_KeyDown"/>
-                <Label Content="Group:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                <ComboBox x:Name="cmbOrg" HorizontalAlignment="Left" VerticalAlignment="Center" Width="208" IsEditable="True"
-                      ItemsSource="{Binding Source={StaticResource mgs}}"
-                      DisplayMemberPath="GroupNameDisplay"
-                      SelectedValuePath="GroupName" Margin="5,0,0,0" KeyDown="cmbOrg_KeyDown" DropDownClosed="cmbOrg_DropDownClosed" />
+            <StackPanel
+                x:Name="stackFilter"
+                Grid.ColumnSpan="2"
+                Margin="0,0,0,5"
+                VerticalAlignment="Top"
+                Opacity="0.5"
+                Orientation="Horizontal">
+                <Label
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Content="Name:" />
+                <TextBox
+                    x:Name="txtFilterMachineId"
+                    Width="120"
+                    Height="23"
+                    Margin="5,0,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    KeyDown="TxtFilterMachineId_KeyDown"
+                    TextWrapping="Wrap" />
+                <Label
+                    Margin="5,0,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Content="Group:" />
+                <ComboBox
+                    x:Name="cmbOrg"
+                    Width="208"
+                    Margin="5,0,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    DisplayMemberPath="GroupNameDisplay"
+                    DropDownClosed="CmbOrg_DropDownClosed"
+                    IsEditable="True"
+                    ItemsSource="{Binding Source={StaticResource mgs}}"
+                    KeyDown="CmbOrg_KeyDown"
+                    SelectedValuePath="GroupName" />
                 <!--<CheckBox x:Name="chkFilterGroupSub" Content="Sub" VerticalAlignment="Center" Margin="5,0,0,0" IsChecked="True"/>-->
 
-                <Grid Height="20" VerticalAlignment="Center"  Margin="5,0,0,0">
+                <Grid
+                    Height="20"
+                    Margin="5,0,0,0"
+                    VerticalAlignment="Center">
                     <ProgressBar x:Name="progressRefresh" />
-                    <Button x:Name="btnFilterRefresh" Content="Refresh" HorizontalAlignment="Center" VerticalAlignment="Center" Click="btnFilterRefresh_Click" Background="{x:Null}" BorderBrush="{x:Null}" />
+                    <Button
+                        x:Name="btnFilterRefresh"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="{x:Null}"
+                        BorderBrush="{x:Null}"
+                        Click="BtnFilterRefresh_Click"
+                        Content="Refresh" />
                 </Grid>
 
 
-                <Label Content="View:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                <ComboBox x:Name="cmbView" HorizontalAlignment="Left" VerticalAlignment="Center" Width="208" IsEditable="True"
-                      ItemsSource="{Binding Source={StaticResource vvs}}"
-                      DisplayMemberPath="ViewName"
-                      SelectedValuePath="ViewId" Margin="5,0,0,0" KeyDown="cmbView_KeyDown" DropDownClosed="cmbView_DropDownClosed"/>
+                <Label
+                    Margin="5,0,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Content="View:" />
+                <ComboBox
+                    x:Name="cmbView"
+                    Width="208"
+                    Margin="5,0,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    DisplayMemberPath="ViewName"
+                    DropDownClosed="CmbView_DropDownClosed"
+                    IsEditable="True"
+                    ItemsSource="{Binding Source={StaticResource vvs}}"
+                    KeyDown="CmbView_KeyDown"
+                    SelectedValuePath="ViewId" />
             </StackPanel>
-            <DataGrid x:Name="dataGridAgents" ItemsSource="{Binding ListMachine, Mode=OneWay}" IsReadOnly="True" Grid.Row="1" AutoGenerateColumns="False" SelectionChanged="dataGridAgents_SelectionChanged">
+            <DataGrid
+                x:Name="dataGridAgents"
+                Grid.Row="1"
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                ItemsSource="{Binding ListMachine, Mode=OneWay}"
+                SelectionChanged="DataGridAgents_SelectionChanged">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding DisplayStatus, FallbackValue=Status}" Header="Status"/>
-                    <DataGridTextColumn Binding="{Binding OS, FallbackValue=OS}" Header="OS"/>
-                    <DataGridTextColumn Binding="{Binding ComputerName, FallbackValue=Name}" Header="Name"/>
-                    <DataGridTextColumn Binding="{Binding MachineGroupReverse, FallbackValue=Group}" Header="Group"/>
-                    <DataGridTextColumn Binding="{Binding DisplayUser, FallbackValue=User}" Header="User"/>
-                    <DataGridTextColumn Binding="{Binding CheckInLast, StringFormat=\{0:yyyy-MM-dd - hh:mm tt\}}" Header="CheckInLast"/>
-                    <DataGridTextColumn Binding="{Binding RebootLast, StringFormat=\{0:yyyy-MM-dd - hh:mm tt\}}" Header="RebootLast"/>
-                    <DataGridTextColumn Binding="{Binding AgentVersion, FallbackValue=AgentVersion}" Header="AgentVersion"/>
+                    <DataGridTextColumn Binding="{Binding DisplayStatus, FallbackValue=Status}" Header="Status" />
+                    <DataGridTextColumn Binding="{Binding OS, FallbackValue=OS}" Header="OS" />
+                    <DataGridTextColumn Binding="{Binding ComputerName, FallbackValue=Name}" Header="Name" />
+                    <DataGridTextColumn Binding="{Binding MachineGroupReverse, FallbackValue=Group}" Header="Group" />
+                    <DataGridTextColumn Binding="{Binding DisplayUser, FallbackValue=User}" Header="User" />
+                    <DataGridTextColumn Binding="{Binding CheckInLast, StringFormat=\{0:yyyy-MM-dd - hh:mm tt\}}" Header="CheckInLast" />
+                    <DataGridTextColumn Binding="{Binding RebootLast, StringFormat=\{0:yyyy-MM-dd - hh:mm tt\}}" Header="RebootLast" />
+                    <DataGridTextColumn Binding="{Binding AgentVersion, FallbackValue=AgentVersion}" Header="AgentVersion" />
                 </DataGrid.Columns>
                 <DataGrid.CellStyle>
                     <Style TargetType="DataGridCell">
                         <Style.Triggers>
                             <MultiDataTrigger>
                                 <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding DisplayStatus}" Value="Down"/>
-                                    <Condition Binding="{Binding Column.Header,RelativeSource={RelativeSource Self}}" Value="Status"/>
+                                    <Condition Binding="{Binding DisplayStatus}" Value="Down" />
+                                    <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
                                 </MultiDataTrigger.Conditions>
-                                <Setter Property="Background" Value="#FF8A8A8A"/>
-                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Background" Value="#FF8A8A8A" />
+                                <Setter Property="Foreground" Value="White" />
                             </MultiDataTrigger>
                             <MultiDataTrigger>
                                 <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding DisplayStatus}" Value="Online"/>
-                                    <Condition Binding="{Binding Column.Header,RelativeSource={RelativeSource Self}}" Value="Status"/>
+                                    <Condition Binding="{Binding DisplayStatus}" Value="Online" />
+                                    <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
                                 </MultiDataTrigger.Conditions>
-                                <Setter Property="Background" Value="#FF98C97C"/>
-                                <Setter Property="Foreground" Value="Black"/>
+                                <Setter Property="Background" Value="#FF98C97C" />
+                                <Setter Property="Foreground" Value="Black" />
                             </MultiDataTrigger>
                             <MultiDataTrigger>
                                 <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding DisplayStatus}" Value="UserIdle"/>
-                                    <Condition Binding="{Binding Column.Header,RelativeSource={RelativeSource Self}}" Value="Status"/>
+                                    <Condition Binding="{Binding DisplayStatus}" Value="UserIdle" />
+                                    <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
                                 </MultiDataTrigger.Conditions>
-                                <Setter Property="Background" Value="#FFFFD225"/>
-                                <Setter Property="Foreground" Value="Black"/>
+                                <Setter Property="Background" Value="#FFFFD225" />
+                                <Setter Property="Foreground" Value="Black" />
                             </MultiDataTrigger>
                             <MultiDataTrigger>
                                 <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding DisplayStatus}" Value="UserActive"/>
-                                    <Condition Binding="{Binding Column.Header,RelativeSource={RelativeSource Self}}" Value="Status"/>
+                                    <Condition Binding="{Binding DisplayStatus}" Value="UserActive" />
+                                    <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
                                 </MultiDataTrigger.Conditions>
-                                <Setter Property="Background" Value="#FF1EA4F7"/>
-                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Background" Value="#FF1EA4F7" />
+                                <Setter Property="Foreground" Value="White" />
                             </MultiDataTrigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.CellStyle>
             </DataGrid>
-            <StackPanel Grid.Column="1" Orientation="Vertical" Grid.Row="1" Margin="5,0,0,0">
-                <Button x:Name="btnConnectLaunch" Content="Live Connect" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectLaunch_Click"/>
-                <Button x:Name="btnConnectShared" Content="Shared" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectShared_Click"/>
-                <Button x:Name="btnConnectPrivate" Content="Private" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectPrivate_Click"/>
-                <Button x:Name="btnSendToProxy" Content="KLCProxy List" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnSendToProxy_Click"/>
+            <StackPanel
+                Grid.Row="1"
+                Grid.Column="1"
+                Margin="5,0,0,0"
+                Orientation="Vertical">
+                <Button
+                    x:Name="btnConnectLaunch"
+                    Margin="0,0,0,5"
+                    VerticalAlignment="Top"
+                    Click="BtnConnectLaunch_Click"
+                    Content="Live Connect"
+                    IsTabStop="False" />
+                <Button
+                    x:Name="btnConnectShared"
+                    Margin="0,0,0,5"
+                    VerticalAlignment="Top"
+                    Click="BtnConnectShared_Click"
+                    Content="Shared"
+                    IsTabStop="False" />
+                <Button
+                    x:Name="btnConnectPrivate"
+                    Margin="0,0,0,5"
+                    VerticalAlignment="Top"
+                    Click="BtnConnectPrivate_Click"
+                    Content="Private"
+                    IsTabStop="False" />
+                <Button
+                    x:Name="btnSendToProxy"
+                    Margin="0,0,0,5"
+                    VerticalAlignment="Top"
+                    Click="BtnSendToProxy_Click"
+                    Content="KLCProxy List"
+                    IsTabStop="False" />
 
-                <Expander Header="Bypass" Margin="0,5,0,0">
+                <Expander Margin="0,5,0,0" Header="Bypass">
                     <StackPanel Orientation="Vertical">
-                        <Button x:Name="btnConnectAltLaunch" Content="Alternative" VerticalAlignment="Top" IsTabStop="False" Margin="0,5" Click="btnConnectAltLaunch_Click"/>
-                        <Button x:Name="btnConnectAltShared" Content="Shared" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectAltShared_Click"/>
-                        <Button x:Name="btnConnectAltPrivate" Content="Private" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectAltPrivate_Click"/>
+                        <Button
+                            x:Name="btnConnectAltLaunch"
+                            Margin="0,5"
+                            VerticalAlignment="Top"
+                            Click="BtnConnectAltLaunch_Click"
+                            Content="Alternative"
+                            IsTabStop="False" />
+                        <Button
+                            x:Name="btnConnectAltShared"
+                            Margin="0,0,0,5"
+                            VerticalAlignment="Top"
+                            Click="BtnConnectAltShared_Click"
+                            Content="Shared"
+                            IsTabStop="False" />
+                        <Button
+                            x:Name="btnConnectAltPrivate"
+                            Margin="0,0,0,5"
+                            VerticalAlignment="Top"
+                            Click="BtnConnectAltPrivate_Click"
+                            Content="Private"
+                            IsTabStop="False" />
 
-                        <Button x:Name="btnConnectOriginalLiveConnect" Content="Live Connect" VerticalAlignment="Top" IsTabStop="False" Margin="0,10,0,5" Click="btnConnectOriginalLiveConnect_Click"/>
-                        <Button x:Name="btnConnectOriginalShared" Content="Shared" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectOriginalShared_Click"/>
-                        <Button x:Name="btnConnectOriginalPrivate" Content="Private" VerticalAlignment="Top" IsTabStop="False" Margin="0,0,0,5" Click="btnConnectOriginalPrivate_Click"/>
-                        <CheckBox x:Name="chkUseMITM" Content="Use MITM" Checked="chkUseMITM_Checked" Unchecked="chkUseMITM_Unchecked"/>
+                        <Button
+                            x:Name="btnConnectOriginalLiveConnect"
+                            Margin="0,10,0,5"
+                            VerticalAlignment="Top"
+                            Click="BtnConnectOriginalLiveConnect_Click"
+                            Content="Live Connect"
+                            IsTabStop="False" />
+                        <Button
+                            x:Name="btnConnectOriginalShared"
+                            Margin="0,0,0,5"
+                            VerticalAlignment="Top"
+                            Click="BtnConnectOriginalShared_Click"
+                            Content="Shared"
+                            IsTabStop="False" />
+                        <Button
+                            x:Name="btnConnectOriginalPrivate"
+                            Margin="0,0,0,5"
+                            VerticalAlignment="Top"
+                            Click="BtnConnectOriginalPrivate_Click"
+                            Content="Private"
+                            IsTabStop="False" />
+                        <CheckBox
+                            x:Name="chkUseMITM"
+                            Checked="ChkUseMITM_Checked"
+                            Content="Use MITM"
+                            Unchecked="ChkUseMITM_Unchecked" />
                     </StackPanel>
                 </Expander>
 

@@ -26,7 +26,7 @@ namespace KLCEx {
     /// </summary>
     public partial class MainWindow : Window {
 
-        private ViewModel model;
+        private readonly ViewModel model;
         private string authToken;
         private bool useMITM = false;
 
@@ -51,11 +51,12 @@ namespace KLCEx {
                 chkUseMITM.Visibility = Visibility.Hidden;
         }
 
-        private void menuLoadToken_Click(object sender, RoutedEventArgs e) {
+        private void MenuLoadToken_Click(object sender, RoutedEventArgs e) {
             string savedAuthToken = KaseyaAuth.GetStoredAuth();
 
-            WindowAuthToken dialog = new WindowAuthToken();
-            dialog.Owner = this;
+            WindowAuthToken dialog = new WindowAuthToken {
+                Owner = this
+            };
             if (savedAuthToken != null)
                 dialog.ResponseText = savedAuthToken;
             bool accept = (bool)dialog.ShowDialog();
@@ -109,9 +110,9 @@ namespace KLCEx {
 
         private bool ConnectPromptWithAdminBypass(Machine agent) {
             string agentName = agent.ComputerName;
-            string agentDWG = (agent.DomainWorkgroup == null ? "" : agent.DomainWorkgroup);
-            string agentUserLast = (agent.UserLast == null ? "" : agent.UserLast);
-            string agentUserCurrent = (agent.UserCurrent == null ? "" : agent.UserCurrent);
+            string agentDWG = agent.DomainWorkgroup ?? "";
+            string agentUserLast = agent.UserLast ?? "";
+            string agentUserCurrent = agent.UserCurrent ?? "";
 
             //string displayGroup = agentApi["Result"]["MachineGroup"];
             string displayUser = (agentUserCurrent != "" ? agentUserCurrent : agentUserLast);
@@ -195,27 +196,27 @@ namespace KLCEx {
             });
         }
 
-        private void txtFilterMachineId_KeyDown(object sender, KeyEventArgs e) {
+        private void TxtFilterMachineId_KeyDown(object sender, KeyEventArgs e) {
             if(e.Key == Key.Enter) {
-                searchRefresh();
+                SearchRefresh();
             }
         }
 
-        private void cmbOrg_KeyDown(object sender, KeyEventArgs e) {
+        private void CmbOrg_KeyDown(object sender, KeyEventArgs e) {
             if (e.Key == Key.Enter) {
-                searchRefresh();
+                SearchRefresh();
             }
         }
 
-        private void cmbOrg_DropDownClosed(object sender, EventArgs e) {
-            searchRefresh();
+        private void CmbOrg_DropDownClosed(object sender, EventArgs e) {
+            SearchRefresh();
         }
 
-        private void btnFilterRefresh_Click(object sender, RoutedEventArgs e) {
-            searchRefresh();
+        private void BtnFilterRefresh_Click(object sender, RoutedEventArgs e) {
+            SearchRefresh();
         }
 
-        private void searchRefresh() {
+        private void SearchRefresh() {
             model.ListMachine.Clear();
             SetConnectButtons(false);
             if (authToken == null)
@@ -279,22 +280,22 @@ namespace KLCEx {
         }
 
         #region Buttons: Launch
-        private void btnConnectLaunch_Click(object sender, RoutedEventArgs e) {
+        private void BtnConnectLaunch_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
             Launch(agent, LaunchMethod.System, LaunchAction.LiveConnect);
         }
 
-        private void btnConnectShared_Click(object sender, RoutedEventArgs e) {
+        private void BtnConnectShared_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
             Launch(agent, LaunchMethod.System, LaunchAction.RemoteControlShared);
         }
 
-        private void btnConnectPrivate_Click(object sender, RoutedEventArgs e) {
+        private void BtnConnectPrivate_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
             Launch(agent, LaunchMethod.System, LaunchAction.RemoteControlPrivate);
         }
 
-        private void btnSendToProxy_Click(object sender, RoutedEventArgs e) {
+        private void BtnSendToProxy_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
             if (agent == null)
                 return;
@@ -305,46 +306,46 @@ namespace KLCEx {
             process.Start();
         }
 
-        private void btnConnectAltLaunch_Click(object sender, RoutedEventArgs e) {
+        private void BtnConnectAltLaunch_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
             Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.LiveConnect);
         }
 
-        private void btnConnectAltShared_Click(object sender, RoutedEventArgs e) {
+        private void BtnConnectAltShared_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
             Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlShared);
         }
 
-        private void btnConnectAltPrivate_Click(object sender, RoutedEventArgs e) {
+        private void BtnConnectAltPrivate_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
             Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlPrivate);
         }
 
-        private void btnConnectOriginalLiveConnect_Click(object sender, RoutedEventArgs e) {
+        private void BtnConnectOriginalLiveConnect_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
             Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.LiveConnect);
         }
 
-        private void btnConnectOriginalShared_Click(object sender, RoutedEventArgs e) {
+        private void BtnConnectOriginalShared_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
             Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlShared);
         }
 
-        private void btnConnectOriginalPrivate_Click(object sender, RoutedEventArgs e) {
+        private void BtnConnectOriginalPrivate_Click(object sender, RoutedEventArgs e) {
             Machine agent = (Machine)dataGridAgents.SelectedValue;
             Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlPrivate);
         }
         #endregion
 
-        private void chkUseMITM_Checked(object sender, RoutedEventArgs e) {
+        private void ChkUseMITM_Checked(object sender, RoutedEventArgs e) {
             useMITM = true;
         }
 
-        private void chkUseMITM_Unchecked(object sender, RoutedEventArgs e) {
+        private void ChkUseMITM_Unchecked(object sender, RoutedEventArgs e) {
             useMITM = false;
         }
 
-        private void dataGridAgents_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+        private void DataGridAgents_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             SetConnectButtons(true);
         }
 
@@ -363,7 +364,7 @@ namespace KLCEx {
             btnConnectOriginalPrivate.IsEnabled = value;
         }
 
-        private void menuViewTest_Click(object sender, RoutedEventArgs e) {
+        private void MenuViewTest_Click(object sender, RoutedEventArgs e) {
             Application.Current.Dispatcher.Invoke((Action)delegate {
                 model.VSAViews.Clear();
                 model.VSAViews.Add(new VSAView("", "< No View >"));
@@ -384,14 +385,14 @@ namespace KLCEx {
             //Console.WriteLine(response.Content);
         }
 
-        private void cmbView_KeyDown(object sender, KeyEventArgs e) {
+        private void CmbView_KeyDown(object sender, KeyEventArgs e) {
             if (e.Key == Key.Enter) {
-                searchRefresh();
+                SearchRefresh();
             }
         }
 
-        private void cmbView_DropDownClosed(object sender, EventArgs e) {
-            searchRefresh();
+        private void CmbView_DropDownClosed(object sender, EventArgs e) {
+            SearchRefresh();
         }
     }
 }
