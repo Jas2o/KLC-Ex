@@ -99,7 +99,7 @@ namespace KLCEx {
                 command.SetForTerminal(agent.OS == "Mac OS X");
 
             if (method == LaunchMethod.System)
-                Process.Start("kaseyaliveconnect:///" + Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(command))));
+                Process.Start("liveconnect:///" + Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(command))));
             else if (method == LaunchMethod.DirectKaseya)
                 command.Launch(false, LaunchExtra.None);
             else if (method == LaunchMethod.DirectKaseyaMITM)
