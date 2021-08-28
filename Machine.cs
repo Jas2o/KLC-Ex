@@ -28,6 +28,7 @@ namespace KLCEx {
         public DateTime RebootLast { get; private set; }
         public string AgentVersion { get; private set; }
 
+        public string AgentNameOnly { get; private set; }
         public string MachineGroup { get; private set; }
         public string MachineGroupReverse { get; private set; }
         public string DomainWorkgroup { get; private set; }
@@ -46,6 +47,7 @@ namespace KLCEx {
                 RebootLast = (DateTime)child["LastRebootTime"];
             AgentVersion = (string)child["AgentVersion"];
 
+            AgentNameOnly = AgentName.Split('.')[0];
             MachineGroup = (string)child["MachineGroup"];
             MachineGroupReverse = string.Join(".", MachineGroup.Split('.').Reverse());
             DomainWorkgroup = (string)child["DomainWorkgroup"];

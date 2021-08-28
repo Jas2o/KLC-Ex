@@ -23,14 +23,15 @@
                 <scm:SortDescription PropertyName="ViewName" />
             </CollectionViewSource.SortDescriptions>
         </CollectionViewSource>
+        <CollectionViewSource x:Key="lap" Source="{Binding ListAgentProc}" />
     </Window.Resources>
     <DockPanel>
-        <Menu DockPanel.Dock="Top">
+        <!--<Menu DockPanel.Dock="Top">
             <MenuItem
                 x:Name="menuLoadToken"
                 Click="MenuLoadToken_Click"
                 Header="Load Token" />
-        </Menu>
+        </Menu>-->
         <Grid Margin="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
@@ -113,98 +114,388 @@
                     KeyDown="CmbView_KeyDown"
                     SelectedValuePath="ViewId" />
             </StackPanel>
-            <DataGrid
-                x:Name="dataGridAgents"
+            <TabControl Grid.Row="1">
+                <TabItem x:Name="tabAgents" Header="Agents">
+                    <DataGrid
+                        x:Name="dataGridAgents"
+                        AutoGenerateColumns="False"
+                        IsReadOnly="True"
+                        ItemsSource="{Binding ListMachine, Mode=OneWay}"
+                        SelectionChanged="DataGridAgents_SelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Binding="{Binding DisplayStatus, FallbackValue=Status}" Header="Status" />
+                            <DataGridTextColumn Binding="{Binding OS, FallbackValue=OS}" Header="OS" />
+                            <DataGridTextColumn Binding="{Binding AgentNameOnly, FallbackValue=Name}" Header="Name" />
+                            <DataGridTextColumn Binding="{Binding MachineGroupReverse, FallbackValue=Group}" Header="Group" />
+                            <DataGridTextColumn Binding="{Binding DisplayUser, FallbackValue=User}" Header="User" />
+                            <DataGridTextColumn Binding="{Binding CheckInLast, StringFormat=\{0:yyyy-MM-dd - hh:mm tt\}}" Header="CheckInLast" />
+                            <DataGridTextColumn Binding="{Binding RebootLast, StringFormat=\{0:yyyy-MM-dd - hh:mm tt\}}" Header="RebootLast" />
+                            <DataGridTextColumn Binding="{Binding AgentVersion, FallbackValue=AgentVersion}" Header="AgentVersion" />
+                        </DataGrid.Columns>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding DisplayStatus}" Value="Down" />
+                                            <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#FF8A8A8A" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding DisplayStatus}" Value="Online" />
+                                            <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#FF98C97C" />
+                                        <Setter Property="Foreground" Value="Black" />
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding DisplayStatus}" Value="UserIdle" />
+                                            <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#FFFFD225" />
+                                        <Setter Property="Foreground" Value="Black" />
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding DisplayStatus}" Value="UserActive" />
+                                            <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#FF1EA4F7" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
+                    </DataGrid>
+                </TabItem>
+                <TabItem x:Name="tabApMachine" Header="AP: History/Pending/Logs">
+                    <Grid x:Name="gridApMachine">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                            <RowDefinition Height="5" />
+                            <RowDefinition />
+                            <RowDefinition Height="5" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
+                            <Button
+                                Name="btnApMachineGet"
+                                Width="50"
+                                Click="btnApMachineGet_Click"
+                                Content="Get" />
+                            <Label
+                                Name="txtApMachineName"
+                                Padding="5,5,0,5"
+                                Content="No machine" />
+                            <Label
+                                Name="txtApMachineGroup"
+                                Padding="0,5,5,5"
+                                Content=" selected to view."
+                                Foreground="#FF969696" />
+                        </StackPanel>
+                        <Expander
+                            x:Name="expanderApScheduled"
+                            Grid.Row="1"
+                            Background="#FFBEE6FF"
+                            Collapsed="expanderAp_Change"
+                            Expanded="expanderAp_Change"
+                            Header="Pending"
+                            IsExpanded="True">
+                            <DataGrid
+                                AlternatingRowBackground="#FFE6E6E6"
+                                AutoGenerateColumns="False"
+                                CanUserSortColumns="False"
+                                HeadersVisibility="Column"
+                                IsReadOnly="True"
+                                ItemsSource="{Binding ListAgentProcScheduled, Mode=OneWay}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding AgentProcedureName, FallbackValue=AgentProcedureName}" Header="Pending ScriptName" />
+                                    <DataGridTextColumn Binding="{Binding NextExecTime, FallbackValue=NextExecTime}" Header="Scheduled Execution" />
+                                    <DataGridTextColumn Binding="{Binding Recurrence, FallbackValue=Recurrence}" Header="Recurring Interval" />
+                                    <DataGridTextColumn Binding="{Binding Admin, FallbackValue=Admin}" Header="Admin" />
+                                    <DataGridTextColumn Binding="{Binding Status, FallbackValue=Status}" Header="Status" />
+                                    <DataGridTextColumn Binding="{Binding Attributes, FallbackValue=Attributes}" Header="Attributes" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Expander>
+                        <GridSplitter
+                            x:Name="gsApScheduledHistory"
+                            Grid.Row="2"
+                            HorizontalAlignment="Stretch"
+                            Background="#FF3C3C3C" />
+                        <Expander
+                            x:Name="expanderApHistory"
+                            Grid.Row="3"
+                            Background="#FFBEE6FF"
+                            Collapsed="expanderAp_Change"
+                            Expanded="expanderAp_Change"
+                            Header="History"
+                            IsExpanded="True">
+                            <DataGrid
+                                AlternatingRowBackground="#FFE6E6E6"
+                                AutoGenerateColumns="False"
+                                CanUserSortColumns="False"
+                                HeadersVisibility="Column"
+                                IsReadOnly="True"
+                                ItemsSource="{Binding ListAgentProcHistory, Mode=OneWay}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding ScriptName, FallbackValue=ScriptName}" Header="History ScriptName" />
+                                    <DataGridTextColumn Binding="{Binding LastExecutionTime, FallbackValue=LastExecutionTime}" Header="Last Execution" />
+                                    <DataGridTextColumn Binding="{Binding Status, FallbackValue=Status}" Header="Status" />
+                                    <DataGridTextColumn Binding="{Binding Admin, FallbackValue=Admin}" Header="Admin" />
+                                    <DataGridTextColumn Binding="{Binding Attributes, FallbackValue=Attributes}" Header="Attributes" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Expander>
+                        <GridSplitter
+                            x:Name="gsApHistoryLogs"
+                            Grid.Row="4"
+                            HorizontalAlignment="Stretch"
+                            Background="#FF3C3C3C" />
+                        <Expander
+                            x:Name="expanderApLogs"
+                            Grid.Row="5"
+                            Background="#FFBEE6FF"
+                            Collapsed="expanderAp_Change"
+                            Expanded="expanderAp_Change"
+                            Header="Logs"
+                            IsExpanded="False">
+                            <DataGrid
+                                AlternatingRowBackground="#FFE6E6E6"
+                                AutoGenerateColumns="False"
+                                CanUserSortColumns="False"
+                                HeadersVisibility="Column"
+                                IsReadOnly="True"
+                                ItemsSource="{Binding ListAgentProcLog, Mode=OneWay}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding LastExecution, FallbackValue=LastExecution}" Header="Time" />
+                                    <DataGridTextColumn Binding="{Binding ProcedureHistory, FallbackValue=ProcedureHistory}" Header="Procedure" />
+                                    <DataGridTextColumn Binding="{Binding Status, FallbackValue=Status}" Header="Description" />
+                                    <DataGridTextColumn Binding="{Binding Admin, FallbackValue=Admin}" Header="Admin" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Expander>
+                    </Grid>
+                </TabItem>
+                <TabItem x:Name="tabApListSchedule" Header="AP: List/Schedule">
+                    <Grid x:Name="gridAp">
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition Height="5" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Expander
+                            x:Name="expanderApList"
+                            Background="#FFBEE6FF"
+                            Collapsed="expanderApListSchedule_Change"
+                            Expanded="expanderApListSchedule_Change"
+                            Header="Agent Procedures List"
+                            IsExpanded="True">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <Grid Margin="0,0,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button
+                                        x:Name="btnAgentProcsLoad"
+                                        Width="50"
+                                        VerticalAlignment="Center"
+                                        Click="btnAgentProcsLoad_Click"
+                                        Content="Load List" />
+                                    <Label
+                                        Grid.Column="1"
+                                        Padding="5,0"
+                                        VerticalAlignment="Center"
+                                        Content="Filter" />
+                                    <TextBox
+                                        x:Name="txtAgentProcsFilter"
+                                        Grid.Column="2"
+                                        Margin="5,0"
+                                        VerticalAlignment="Center"
+                                        TextChanged="txtAgentProcsFilter_TextChanged" />
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                        <Button
+                                            x:Name="btnAgentProcsFilterClear"
+                                            VerticalAlignment="Center"
+                                            Click="btnAgentProcsFilterClear_Click"
+                                            Content="Clear" />
+
+                                        <Button
+                                            x:Name="btnAgentProcsSchedule"
+                                            Margin="5,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Click="btnAgentProcsSchedule_Click"
+                                            Content="Select Procedure" />
+                                    </StackPanel>
+                                </Grid>
+                                <DataGrid
+                                    x:Name="dataGridAgentProcs"
+                                    Grid.Row="1"
+                                    AlternatingRowBackground="#FFE6E6E6"
+                                    AutoGenerateColumns="False"
+                                    CanUserSortColumns="False"
+                                    HeadersVisibility="Column"
+                                    IsReadOnly="True"
+                                    ItemsSource="{Binding Source={StaticResource lap}}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Binding="{Binding DisplayPath, FallbackValue=DisplayPath}" Header="Path" />
+                                        <DataGridTextColumn Binding="{Binding AgentProcedureName, FallbackValue=AgentProcedureName}" Header="Procedure Name" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </Expander>
+                        <GridSplitter
+                            x:Name="gsApListSchedule"
+                            Grid.Row="1"
+                            HorizontalAlignment="Stretch"
+                            Background="#FF3C3C3C" />
+                        <Expander
+                            x:Name="expanderApSchedule"
+                            Grid.Row="2"
+                            Background="#FFBEE6FF"
+                            Collapsed="expanderApListSchedule_Change"
+                            Expanded="expanderApListSchedule_Change"
+                            Header="Schedule"
+                            IsExpanded="True">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
+                                    <Button
+                                        Margin="0,0,0,0"
+                                        Content="Schedule Agent Procedure"
+                                        IsEnabled="False" />
+                                    <Button
+                                        Margin="5,0,0,0"
+                                        Content="Run Now"
+                                        IsEnabled="False" />
+                                    <Button
+                                        Margin="5,0,0,0"
+                                        Content="Cancel"
+                                        IsEnabled="False" />
+                                    <Button
+                                        x:Name="btnAgentProcsRefreshAll"
+                                        Margin="5,0,0,0"
+                                        Click="btnAgentProcsRefreshAll_Click"
+                                        Content="Refresh All" />
+                                    <Button
+                                        x:Name="btnAgentProcsRefreshPending"
+                                        Margin="5,0,0,0"
+                                        Click="btnAgentProcsRefreshPending_Click"
+                                        Content="Refresh Pending" />
+                                </StackPanel>
+                                <DataGrid
+                                    x:Name="dataGridAgentsSchedule"
+                                    Grid.Row="1"
+                                    Grid.Column="2"
+                                    AutoGenerateColumns="False"
+                                    IsReadOnly="True"
+                                    ItemsSource="{Binding ListAgentProcMHS, Mode=OneWay}"
+                                    SelectionChanged="dataGridAgentsSchedule_SelectionChanged">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Binding="{Binding Machine.DisplayStatus, FallbackValue=Status}" Header="Status" />
+                                        <DataGridTextColumn Binding="{Binding Machine.OS, FallbackValue=OS}" Header="OS" />
+                                        <DataGridTextColumn Binding="{Binding Machine.AgentNameOnly, FallbackValue=Name}" Header="Name" />
+                                        <DataGridTextColumn Binding="{Binding Machine.MachineGroup, FallbackValue=Group}" Header="Group" />
+
+                                        <DataGridTextColumn Binding="{Binding History.LastExecutionTime, FallbackValue=''}" Header="Last Time Exec" />
+                                        <DataGridTextColumn Binding="{Binding History.Status, FallbackValue=''}" Header="Last Exec Status" />
+                                        <DataGridTextColumn Binding="{Binding Schedule.NextExecTime, FallbackValue=''}" Header="Next Exec Time" />
+
+                                        <DataGridTextColumn Binding="{Binding Machine.DisplayUser, FallbackValue=User}" Header="User" />
+                                    </DataGrid.Columns>
+                                    <DataGrid.CellStyle>
+                                        <Style TargetType="DataGridCell">
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Machine.DisplayStatus}" Value="Down" />
+                                                        <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Background" Value="#FF8A8A8A" />
+                                                    <Setter Property="Foreground" Value="White" />
+                                                </MultiDataTrigger>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Machine.DisplayStatus}" Value="Online" />
+                                                        <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Background" Value="#FF98C97C" />
+                                                    <Setter Property="Foreground" Value="Black" />
+                                                </MultiDataTrigger>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Machine.DisplayStatus}" Value="UserIdle" />
+                                                        <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Background" Value="#FFFFD225" />
+                                                    <Setter Property="Foreground" Value="Black" />
+                                                </MultiDataTrigger>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Machine.DisplayStatus}" Value="UserActive" />
+                                                        <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Background" Value="#FF1EA4F7" />
+                                                    <Setter Property="Foreground" Value="White" />
+                                                </MultiDataTrigger>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding History.StatusFailed}" Value="True" />
+                                                        <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Last Exec Status" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Background" Value="#ffffc7b6 " />
+                                                    <Setter Property="Foreground" Value="Black" />
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGrid.CellStyle>
+                                </DataGrid>
+                            </Grid>
+                        </Expander>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+            <StackPanel
                 Grid.Row="1"
-                AutoGenerateColumns="False"
-                IsReadOnly="True"
-                ItemsSource="{Binding ListMachine, Mode=OneWay}"
-                SelectionChanged="DataGridAgents_SelectionChanged">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding DisplayStatus, FallbackValue=Status}" Header="Status" />
-                    <DataGridTextColumn Binding="{Binding OS, FallbackValue=OS}" Header="OS" />
-                    <DataGridTextColumn Binding="{Binding ComputerName, FallbackValue=Name}" Header="Name" />
-                    <DataGridTextColumn Binding="{Binding MachineGroupReverse, FallbackValue=Group}" Header="Group" />
-                    <DataGridTextColumn Binding="{Binding DisplayUser, FallbackValue=User}" Header="User" />
-                    <DataGridTextColumn Binding="{Binding CheckInLast, StringFormat=\{0:yyyy-MM-dd - hh:mm tt\}}" Header="CheckInLast" />
-                    <DataGridTextColumn Binding="{Binding RebootLast, StringFormat=\{0:yyyy-MM-dd - hh:mm tt\}}" Header="RebootLast" />
-                    <DataGridTextColumn Binding="{Binding AgentVersion, FallbackValue=AgentVersion}" Header="AgentVersion" />
-                </DataGrid.Columns>
-                <DataGrid.CellStyle>
-                    <Style TargetType="DataGridCell">
-                        <Style.Triggers>
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding DisplayStatus}" Value="Down" />
-                                    <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
-                                </MultiDataTrigger.Conditions>
-                                <Setter Property="Background" Value="#FF8A8A8A" />
-                                <Setter Property="Foreground" Value="White" />
-                            </MultiDataTrigger>
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding DisplayStatus}" Value="Online" />
-                                    <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
-                                </MultiDataTrigger.Conditions>
-                                <Setter Property="Background" Value="#FF98C97C" />
-                                <Setter Property="Foreground" Value="Black" />
-                            </MultiDataTrigger>
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding DisplayStatus}" Value="UserIdle" />
-                                    <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
-                                </MultiDataTrigger.Conditions>
-                                <Setter Property="Background" Value="#FFFFD225" />
-                                <Setter Property="Foreground" Value="Black" />
-                            </MultiDataTrigger>
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding DisplayStatus}" Value="UserActive" />
-                                    <Condition Binding="{Binding Column.Header, RelativeSource={RelativeSource Self}}" Value="Status" />
-                                </MultiDataTrigger.Conditions>
-                                <Setter Property="Background" Value="#FF1EA4F7" />
-                                <Setter Property="Foreground" Value="White" />
-                            </MultiDataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </DataGrid.CellStyle>
-            </DataGrid>
+                Grid.Column="1"
+                Margin="5,0,0,0"
+                VerticalAlignment="Bottom">
+                <Button
+                    x:Name="btnLoadToken"
+                    Click="btnLoadToken_Click"
+                    Content="Load Token" />
+                <TextBlock
+                    x:Name="txtVersion"
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Foreground="Gray"
+                    Text="DD/MM/YYYY"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+            </StackPanel>
             <StackPanel
                 Grid.Row="1"
                 Grid.Column="1"
                 Margin="5,0,0,0"
                 Orientation="Vertical">
-                <Button
-                    x:Name="btnConnectLaunch"
-                    Margin="0,0,0,5"
-                    VerticalAlignment="Top"
-                    Click="BtnConnectLaunch_Click"
-                    Content="Live Connect"
-                    IsTabStop="False" />
-                <Button
-                    x:Name="btnConnectShared"
-                    Margin="0,0,0,5"
-                    VerticalAlignment="Top"
-                    Click="BtnConnectShared_Click"
-                    Content="Shared"
-                    IsTabStop="False" />
-                <Button
-                    x:Name="btnConnectPrivate"
-                    Margin="0,0,0,5"
-                    VerticalAlignment="Top"
-                    Click="BtnConnectPrivate_Click"
-                    Content="Private"
-                    IsTabStop="False" />
-                <Button
-                    x:Name="btnSendToProxy"
-                    Margin="0,0,0,5"
-                    VerticalAlignment="Top"
-                    Click="BtnSendToProxy_Click"
-                    Content="KLCProxy List"
-                    IsTabStop="False" />
-
-                <Expander Margin="0,5,0,0" Header="Bypass">
-                    <StackPanel Orientation="Vertical">
+                <Expander Margin="0,0,0,5" Header="Bypass">
+                    <StackPanel Background="#FFBBBBBB" Orientation="Vertical">
                         <Button
                             x:Name="btnConnectAltLaunch"
                             Margin="0,5"
@@ -253,8 +544,39 @@
                             Checked="ChkUseMITM_Checked"
                             Content="Use MITM"
                             Unchecked="ChkUseMITM_Unchecked" />
+
+                        <Separator Margin="0,5,0,0" />
                     </StackPanel>
                 </Expander>
+
+                <Button
+                    x:Name="btnConnectLaunch"
+                    Margin="0,0,0,5"
+                    VerticalAlignment="Top"
+                    Click="BtnConnectLaunch_Click"
+                    Content="Live Connect"
+                    IsTabStop="False" />
+                <Button
+                    x:Name="btnConnectShared"
+                    Margin="0,0,0,5"
+                    VerticalAlignment="Top"
+                    Click="BtnConnectShared_Click"
+                    Content="Shared"
+                    IsTabStop="False" />
+                <Button
+                    x:Name="btnConnectPrivate"
+                    Margin="0,0,0,5"
+                    VerticalAlignment="Top"
+                    Click="BtnConnectPrivate_Click"
+                    Content="Private"
+                    IsTabStop="False" />
+                <Button
+                    x:Name="btnSendToProxy"
+                    Margin="0,0,0,5"
+                    VerticalAlignment="Top"
+                    Click="BtnSendToProxy_Click"
+                    Content="KLCProxy List"
+                    IsTabStop="False" />
 
             </StackPanel>
             <!--<TextBox x:Name="txtMachines" Grid.Row="1" TextWrapping="Wrap" FontFamily="Consolas"/>-->

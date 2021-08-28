@@ -34,6 +34,8 @@ namespace KLCEx {
             model = new ViewModel();
             this.DataContext = model;
             InitializeComponent();
+            txtVersion.Text = Properties.Resources.BuildDate.Trim();
+
             Kaseya.Start();
         }
 
@@ -51,7 +53,7 @@ namespace KLCEx {
                 chkUseMITM.Visibility = Visibility.Hidden;
         }
 
-        private void MenuLoadToken_Click(object sender, RoutedEventArgs e) {
+        private void btnLoadToken_Click(object sender, RoutedEventArgs e) {
             string savedAuthToken = KaseyaAuth.GetStoredAuth();
 
             WindowAuthToken dialog = new WindowAuthToken {
@@ -109,12 +111,12 @@ namespace KLCEx {
         }
 
         private bool ConnectPromptWithAdminBypass(Machine agent) {
-            string agentName = agent.ComputerName;
+            string agentName = agent.AgentNameOnly;
             string agentDWG = agent.DomainWorkgroup ?? "";
             string agentUserLast = agent.UserLast ?? "";
             string agentUserCurrent = agent.UserCurrent ?? "";
 
-            //string displayGroup = agentApi["Result"]["MachineGroup"];
+            string displayGroup = agent.MachineGroupReverse;
             string displayUser = (agentUserCurrent != "" ? agentUserCurrent : agentUserLast);
             string displayGWG = "";
 
@@ -126,7 +128,7 @@ namespace KLCEx {
             if (arrAdmins.Contains(displayUser.ToLower())) {
                 result = MessageBoxResult.Yes;
             } else {
-                string textConfirm = string.Format("Agent: {0}\r\nUser: {1}\r\n{2}", agentName, displayUser, displayGWG);
+                string textConfirm = string.Format("Agent: {0}\r\nGroup: {1}\r\n\r\nUser: {2}\r\n{3}", agentName, displayGroup, displayUser, displayGWG);
                 result = MessageBox.Show("Connect to:\r\n\r\n" + textConfirm, "Connecting to " + agentName, MessageBoxButton.YesNo, MessageBoxImage.Question);
             }
 
@@ -174,10 +176,15 @@ namespace KLCEx {
 
             Application.Current.Dispatcher.Invoke((Action)delegate {
                 stackFilter.Opacity = 1.0;
-                if(model.MachineGroups.Count > 1)
-                    menuLoadToken.Header = "Token Loaded";
-                else
-                    menuLoadToken.Header = "Load Token";
+                if (model.MachineGroups.Count > 1) {
+                    btnLoadToken.Content = "Token Loaded";
+                    btnLoadToken.Opacity = 0.5;
+                    btnLoadToken.Background = Brushes.Transparent;
+                } else {
+                    btnLoadToken.Content = "Load Token";
+                    btnLoadToken.Opacity = 1.0;
+                    btnLoadToken.Background = Brushes.DarkOrange;
+                }
 
                 progressRefresh.IsIndeterminate = false;
             });
@@ -185,7 +192,8 @@ namespace KLCEx {
 
         private void ConnectLMS() {
             //api/v1.0/system/machinegroups?$top=5&$filter=(substringof(%27ramvek%27,tolower(MachineGroupName))%20eq%20true)&$orderby=MachineGroupName%20asc
-            menuLoadToken.Header = "Loading...";
+            btnLoadToken.Content = "Loading...";
+            btnLoadToken.Background = Brushes.Gold;
             SetConnectButtons(false);
 
             Task.Run(() =>
@@ -280,59 +288,94 @@ namespace KLCEx {
         }
 
         #region Buttons: Launch
+        private Machine GetSelectedMachineByTab() {
+            if(tabApListSchedule.IsSelected) {
+                AgentProcMHS apMHS = (AgentProcMHS)dataGridAgentsSchedule.SelectedValue;
+                if(apMHS != null && apMHS.Machine != null)
+                    return apMHS.Machine;
+            } else {
+                Machine agent = (Machine)dataGridAgents.SelectedValue;
+                if(agent != null)
+                    return agent;
+            }
+
+            return null;
+        }
+
         private void BtnConnectLaunch_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Machine agent = GetSelectedMachineByTab();
             Launch(agent, LaunchMethod.System, LaunchAction.LiveConnect);
         }
 
         private void BtnConnectShared_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Machine agent = GetSelectedMachineByTab();
             Launch(agent, LaunchMethod.System, LaunchAction.RemoteControlShared);
         }
 
         private void BtnConnectPrivate_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Machine agent = GetSelectedMachineByTab();
             Launch(agent, LaunchMethod.System, LaunchAction.RemoteControlPrivate);
         }
 
         private void BtnSendToProxy_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
-            if (agent == null)
-                return;
+            if (tabApListSchedule.IsSelected) {
+                if (dataGridAgentsSchedule.SelectedItems.Count == 0)
+                    return;
 
-            Process process = new Process();
-            process.StartInfo.FileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\KLCProxy.exe";
-            process.StartInfo.Arguments = agent.Guid;
-            process.Start();
+                foreach (AgentProcMHS apMHS in dataGridAgentsSchedule.SelectedItems) {
+                    Process process = new Process();
+                    if (Process.GetProcessesByName("KLCProxyClassic").Any())
+                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\KLCProxyClassic.exe";
+                    else
+                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\KLCProxy.exe";
+                    process.StartInfo.Arguments = apMHS.Machine.Guid;
+                    process.Start();
+                    process.WaitForExit(2000);
+                }
+            } else {
+                if (dataGridAgents.SelectedItems.Count == 0)
+                    return;
+
+                foreach (Machine agent in dataGridAgents.SelectedItems) {
+                    Process process = new Process();
+                    if (Process.GetProcessesByName("KLCProxyClassic").Any())
+                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\KLCProxyClassic.exe";
+                    else
+                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\KLCProxy.exe";
+                    process.StartInfo.Arguments = agent.Guid;
+                    process.Start();
+                    process.WaitForExit(2000);
+                }
+            }
         }
 
         private void BtnConnectAltLaunch_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Machine agent = GetSelectedMachineByTab();
             Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.LiveConnect);
         }
 
         private void BtnConnectAltShared_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Machine agent = GetSelectedMachineByTab();
             Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlShared);
         }
 
         private void BtnConnectAltPrivate_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Machine agent = GetSelectedMachineByTab();
             Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlPrivate);
         }
 
         private void BtnConnectOriginalLiveConnect_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Machine agent = GetSelectedMachineByTab();
             Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.LiveConnect);
         }
 
         private void BtnConnectOriginalShared_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Machine agent = GetSelectedMachineByTab();
             Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlShared);
         }
 
         private void BtnConnectOriginalPrivate_Click(object sender, RoutedEventArgs e) {
-            Machine agent = (Machine)dataGridAgents.SelectedValue;
+            Machine agent = GetSelectedMachineByTab();
             Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlPrivate);
         }
         #endregion
@@ -345,8 +388,35 @@ namespace KLCEx {
             useMITM = false;
         }
 
-        private void DataGridAgents_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+        private void MachineSelectionChangedFromTab() {
             SetConnectButtons(true);
+            model.ListAgentProcHistory.Clear();
+            model.ListAgentProcLog.Clear();
+            model.ListAgentProcScheduled.Clear();
+
+            Machine agent = null;
+
+            if (tabApListSchedule.IsSelected) {
+                AgentProcMHS apMHS = (AgentProcMHS)dataGridAgentsSchedule.SelectedValue;
+                if(apMHS != null)
+                    agent = apMHS.Machine;
+            } else {
+                agent = (Machine)dataGridAgents.SelectedValue;
+            }
+
+            if (agent == null) {
+                txtApMachineName.Content = "No machine";
+                txtApMachineGroup.Content = " selected to view.";
+            } else {
+                txtApMachineName.Content = agent.AgentNameOnly;
+                txtApMachineGroup.Content = "." + agent.MachineGroup;
+            }
+
+            model.SelectedAgent = agent;
+        }
+
+        private void DataGridAgents_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            MachineSelectionChangedFromTab();
         }
 
         private void SetConnectButtons(bool value) {
@@ -394,5 +464,320 @@ namespace KLCEx {
         private void CmbView_DropDownClosed(object sender, EventArgs e) {
             SearchRefresh();
         }
+
+        private void txtAgentProcsFilter_TextChanged(object sender, TextChangedEventArgs e) {
+            ListCollectionView collectionView = (ListCollectionView)CollectionViewSource.GetDefaultView(dataGridAgentProcs.ItemsSource);
+            collectionView.Filter = new Predicate<object>(x =>
+                ((AgentProc)x).DisplayPath.IndexOf(txtAgentProcsFilter.Text, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                ((AgentProc)x).AgentProcedureName.IndexOf(txtAgentProcsFilter.Text, StringComparison.OrdinalIgnoreCase) >= 0
+            );
+
+            //Resize the columns to fit what's displayed
+            foreach (DataGridColumn c in dataGridAgentProcs.Columns) {
+                c.Width = 0;
+                c.Width = DataGridLength.Auto;
+            }
+        }
+
+        private void btnAgentProcsLoad_Click(object sender, RoutedEventArgs e) {
+            btnAgentProcsLoad.IsEnabled = false;
+            progressRefresh.IsIndeterminate = true;
+
+            BackgroundWorker bw = new BackgroundWorker();
+            //bw.WorkerReportsProgress = true;
+            bw.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args) {
+                List<AgentProc> listAp = new List<AgentProc>();
+
+                int totalRecords = 0;
+                int skip = 0;
+                IRestResponse response;
+                do {
+                    response = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs?$top=100&$orderby=AgentProcedureName%20asc" + (skip > 0 ? "&$skip=" + skip : ""));
+
+                    if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                        return;
+                    dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
+                    totalRecords = (int)result["TotalRecords"];
+                    foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
+                        listAp.Add(new AgentProc(child));
+                    }
+
+                    skip += 100;
+                } while (skip < totalRecords);
+
+                // Doing the sort in WPF is not too good for our needs.
+                listAp = listAp.OrderBy(x => x.Path).ThenBy(x => x.AgentProcedureName).ToList();
+                Application.Current.Dispatcher.Invoke((Action)delegate {
+                    model.ListAgentProc.Clear();
+                    foreach (AgentProc ap in listAp) {
+                        model.ListAgentProc.Add(ap);
+                    }
+                });
+            });
+
+            bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
+            delegate (object o, RunWorkerCompletedEventArgs args) {
+                progressRefresh.IsIndeterminate = false;
+                btnAgentProcsLoad.IsEnabled = true;
+            });
+
+            bw.RunWorkerAsync();
+
+            /*
+            TreeViewItem root = new TreeViewItem();
+            TreeViewItem currNode = null;
+            foreach (AgentProc ap in listAp) {
+                string[] parts = ap.Path.Split('/');
+
+                TreeViewItem node = root;
+                for (int i = 0; i < parts.Length; i++) {
+                    string header = parts[i];
+
+                    if (!TreeViewIfExists(node, header, ref node)) {
+                        currNode = new TreeViewItem() {
+                            Header = header
+                        };
+
+                        if (i == 0) {
+                            root = currNode;
+                            treeAgentProc.Items.Add(root);
+                        } else {
+                            node.Items.Add(currNode);
+                            if (i == parts.Length - 1)
+                                node = root;
+                            else
+                                node = currNode;
+                        }
+                    }
+                }
+
+                TreeViewItem apNode = new TreeViewItem() {
+                    Header = ap.AgentProcedureName,
+                    Tag = "<" + ap.Path + "> " + ap.AgentProcedureName
+                };
+                currNode.Items.Add(apNode);
+            }
+            */
+        }
+
+        private void btnAgentProcsFilterClear_Click(object sender, RoutedEventArgs e) {
+            txtAgentProcsFilter.Clear();
+        }
+
+        private void expanderAp_Change(object sender, RoutedEventArgs e) {
+            if (gsApScheduledHistory == null || gsApHistoryLogs == null)
+                return;
+
+            gridApMachine.RowDefinitions[1].Height = (expanderApScheduled.IsExpanded ? new GridLength(1, GridUnitType.Star) : new GridLength(1, GridUnitType.Auto));
+            gridApMachine.RowDefinitions[3].Height = (expanderApHistory.IsExpanded ? new GridLength(1, GridUnitType.Star) : new GridLength(1, GridUnitType.Auto));
+            gridApMachine.RowDefinitions[5].Height = (expanderApLogs.IsExpanded ? new GridLength(2, GridUnitType.Star) : new GridLength(1, GridUnitType.Auto));
+
+            gsApScheduledHistory.IsEnabled = (expanderApScheduled.IsExpanded && expanderApHistory.IsExpanded);
+            gsApHistoryLogs.IsEnabled = (expanderApHistory.IsExpanded && expanderApLogs.IsExpanded);
+        }
+
+        private void btnApMachineGet_Click(object sender, RoutedEventArgs e) {
+            Machine agent = model.SelectedAgent;
+            if (agent == null)
+                return;
+
+            model.ListAgentProcHistory.Clear();
+            model.ListAgentProcScheduled.Clear();
+            model.ListAgentProcLog.Clear();
+            txtApMachineName.Content = agent.AgentNameOnly;
+            txtApMachineGroup.Content = "." + agent.MachineGroup;
+
+            IRestResponse responseHistory;
+            responseHistory = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs/" + agent.Guid + "/history?$top=25&$orderby=LastExecutionTime%20desc");
+            dynamic resultHistory = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseHistory.Content);
+            //int totalRecords = (int)result["TotalRecords"];
+
+            IRestResponse responseScheduled;
+            responseScheduled = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs/" + agent.Guid + "/scheduledprocs?$top=25&$orderby=NextExecTime%20desc");
+            dynamic resultScheduled = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseScheduled.Content);
+            //int totalRecords = (int)result["TotalRecords"];
+
+            IRestResponse responseLogs;
+            responseLogs = Kaseya.GetRequest(authToken, "api/v1.0/assetmgmt/logs/" + agent.Guid + "/agentprocedure?$top=25&$orderby=LastExecution%20desc");
+            dynamic resultLogs = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseLogs.Content);
+            //int totalRecords = (int)result["TotalRecords"];
+
+            foreach (Newtonsoft.Json.Linq.JObject child in resultHistory["Result"].Children()) {
+                model.ListAgentProcHistory.Add(new AgentProcHistory(child));
+            }
+            foreach (Newtonsoft.Json.Linq.JObject child in resultScheduled["Result"].Children()) {
+                model.ListAgentProcScheduled.Add(new AgentProcScheduled(child));
+            }
+            foreach (Newtonsoft.Json.Linq.JObject child in resultLogs["Result"].Children()) {
+                model.ListAgentProcLog.Add(new AgentProcLog(child));
+            }
+
+            tabApMachine.IsSelected = true;
+        }
+
+        private void btnAgentProcsSchedule_Click(object sender, RoutedEventArgs e) {
+            AgentProc agentProc = (AgentProc)dataGridAgentProcs.SelectedItem;
+            if (agentProc == null)
+                return;
+
+            btnAgentProcsSchedule.IsEnabled = btnAgentProcsRefreshAll.IsEnabled = btnAgentProcsRefreshPending.IsEnabled = false;
+            progressRefresh.IsIndeterminate = true;
+
+            model.ListAgentProcMHS.Clear();
+            model.SelectedAgentProc = agentProc;
+            expanderApSchedule.Header = "Schedule: " + agentProc.AgentProcedureName;
+
+            BackgroundWorker bw = new BackgroundWorker();
+            bw.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args) {
+                IRestResponse responseSchedule;
+                IRestResponse responseHistory;
+
+                foreach (Machine machine in model.ListMachine) {
+                    AgentProcHistory history = null;
+                    AgentProcScheduled scheduled = null;
+
+                    responseSchedule = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs/" + machine.Guid + "/scheduledprocs?$filter=AgentProcedureId eq " + agentProc.AgentProcedureId);
+                    if (responseSchedule.StatusCode == System.Net.HttpStatusCode.OK) {
+                        dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseSchedule.Content);
+                        int records = (int)result["TotalRecords"];
+                        if (records > 1) {
+                            Application.Current.Dispatcher.Invoke((Action)delegate {
+                                MessageBox.Show("Please tell Jason!\r\n\r\nProcedure: " + agentProc.AgentProcedureName + " (" + agentProc.Path + ")\r\nMachine: " + machine.AgentName + "\r\nSchedules: " + records);
+                            });
+                        }
+                        foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
+                            scheduled = new AgentProcScheduled(child);
+                        }
+                    }
+
+                    responseHistory = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs/" + machine.Guid + "/history?$top=1&$filter=ScriptName eq '" + agentProc.AgentProcedureName + "'&$orderby=LastExecutionTime desc");
+                    if (responseHistory.StatusCode == System.Net.HttpStatusCode.OK) {
+                        dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseHistory.Content);
+                        //int records = (int)result["TotalRecords"];
+                        foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
+                            history = new AgentProcHistory(child);
+                        }
+                    }
+
+                    Application.Current.Dispatcher.Invoke((Action)delegate {
+                        model.ListAgentProcMHS.Add(new AgentProcMHS(machine, history, scheduled));
+                    });
+                }
+            });
+
+            bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
+            delegate (object o, RunWorkerCompletedEventArgs args) {
+                //Resize the columns to fit what's displayed
+                foreach (DataGridColumn c in dataGridAgentsSchedule.Columns) {
+                    c.Width = 0;
+                    c.Width = DataGridLength.Auto;
+                }
+
+                progressRefresh.IsIndeterminate = false;
+                btnAgentProcsSchedule.IsEnabled = btnAgentProcsRefreshAll.IsEnabled = btnAgentProcsRefreshPending.IsEnabled = true;
+            });
+
+            bw.RunWorkerAsync();
+        }
+
+        private void btnAgentProcsRefreshAll_Click(object sender, RoutedEventArgs e) {
+            RefreshAgentProcMHS(false);
+        }
+
+        private void btnAgentProcsRefreshPending_Click(object sender, RoutedEventArgs e) {
+            RefreshAgentProcMHS(true);
+        }
+
+        private void RefreshAgentProcMHS(bool JustPending) {
+            if (model.SelectedAgentProc == null)
+                return;
+
+            btnAgentProcsSchedule.IsEnabled = btnAgentProcsRefreshAll.IsEnabled = btnAgentProcsRefreshPending.IsEnabled = false;
+            progressRefresh.IsIndeterminate = true;
+
+            BackgroundWorker bw = new BackgroundWorker();
+            bw.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args) {
+                IRestResponse responseSchedule;
+                IRestResponse responseHistory;
+
+                AgentProc agentProc = model.SelectedAgentProc;
+                for (int i = 0; i < model.ListAgentProcMHS.Count; i++) {
+                    if (JustPending && model.ListAgentProcMHS[i].Schedule == null)
+                        continue;
+
+                    Machine machine = model.ListAgentProcMHS[i].Machine;
+                    AgentProcHistory history = null;
+                    AgentProcScheduled scheduled = null;
+
+                    responseSchedule = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs/" + machine.Guid + "/scheduledprocs?$filter=AgentProcedureId eq " + agentProc.AgentProcedureId);
+                    if (responseSchedule.StatusCode == System.Net.HttpStatusCode.OK) {
+                        dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseSchedule.Content);
+                        int records = (int)result["TotalRecords"];
+                        if (records > 1) {
+                            Application.Current.Dispatcher.Invoke((Action)delegate {
+                                MessageBox.Show("Please tell Jason!\r\n\r\nProcedure: " + agentProc.AgentProcedureName + " (" + agentProc.Path + ")\r\nMachine: " + machine.AgentName + "\r\nSchedules: " + records);
+                            });
+                        }
+                        foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
+                            scheduled = new AgentProcScheduled(child);
+                        }
+                    }
+
+                    responseHistory = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs/" + machine.Guid + "/history?$top=1&$filter=ScriptName eq '" + agentProc.AgentProcedureName + "'&$orderby=LastExecutionTime desc");
+                    if (responseHistory.StatusCode == System.Net.HttpStatusCode.OK) {
+                        dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseHistory.Content);
+                        //int records = (int)result["TotalRecords"];
+                        foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
+                            history = new AgentProcHistory(child);
+                        }
+                    }
+
+                    Application.Current.Dispatcher.Invoke((Action)delegate {
+                        model.ListAgentProcMHS[i] = new AgentProcMHS(machine, history, scheduled);
+                    });
+                }
+            });
+
+            bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
+            delegate (object o, RunWorkerCompletedEventArgs args) {
+                progressRefresh.IsIndeterminate = false;
+                btnAgentProcsSchedule.IsEnabled = btnAgentProcsRefreshAll.IsEnabled = btnAgentProcsRefreshPending.IsEnabled = true;
+            });
+
+            bw.RunWorkerAsync();
+        }
+
+        private void expanderApListSchedule_Change(object sender, RoutedEventArgs e) {
+            if (gsApListSchedule == null)
+                return;
+
+            gridAp.RowDefinitions[0].Height = (expanderApList.IsExpanded ? new GridLength(1, GridUnitType.Star) : new GridLength(1, GridUnitType.Auto));
+            gridAp.RowDefinitions[2].Height = (expanderApSchedule.IsExpanded ? new GridLength(1, GridUnitType.Star) : new GridLength(1, GridUnitType.Auto));
+
+            gsApListSchedule.IsEnabled = (expanderApList.IsExpanded && expanderApSchedule.IsExpanded);
+        }
+
+        private void dataGridAgentsSchedule_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            MachineSelectionChangedFromTab();
+        }
+
+        /*
+        private bool TreeViewIfExists(TreeViewItem itm, string header, ref TreeViewItem which) {
+            if (itm.Header as string == header) {
+                which = itm;
+                return true;
+            }
+            foreach (TreeViewItem i in itm.Items) {
+                if (i.Header as string == header) {
+                    which = i;
+                    return true;
+                } else if (i.HasItems) {
+                    if (TreeViewIfExists(i, header, ref which))
+                        return true;
+                }
+            }
+            return false;
+        }
+        */
     }
 }
