@@ -14,6 +14,7 @@ namespace KLCEx {
         public ObservableCollection<AgentProcLog> ListAgentProcLog { get; set; }
 
         public ObservableCollection<AgentProcMHS> ListAgentProcMHS { get; set; } //Machine/History/Scheduled
+        public ObservableCollection<MachineRM> ListMachineRM { get; set; } //Remote Maintenance
 
         private Machine _selectedAgent;
         public Machine SelectedAgent {
@@ -44,6 +45,7 @@ namespace KLCEx {
             ListAgentProcLog = new ObservableCollection<AgentProcLog>();
 
             ListAgentProcMHS = new ObservableCollection<AgentProcMHS>();
+            ListMachineRM = new ObservableCollection<MachineRM>();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

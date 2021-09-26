@@ -13,22 +13,19 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace KLCEx {
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window {
-
         private readonly ViewModel model;
         private string authToken;
         private bool useMITM = false;
+        private BackgroundWorker bwRefresh;
 
         public MainWindow() {
             model = new ViewModel();
@@ -71,6 +68,7 @@ namespace KLCEx {
         }
 
         #region Launch
+
         public enum LaunchMethod {
             System,
             DirectKaseya,
@@ -98,7 +96,7 @@ namespace KLCEx {
             } else if (action == LaunchAction.RemoteControlPrivate)
                 command.SetForRemoteControl(true, true);
             else if (action == LaunchAction.Terminal)
-                command.SetForTerminal(agent.OS == "Mac OS X");
+                command.SetForTerminal(agent.OSType == "Mac OS X");
 
             if (method == LaunchMethod.System)
                 Process.Start("liveconnect:///" + Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(command))));
@@ -120,7 +118,7 @@ namespace KLCEx {
             string displayUser = (agentUserCurrent != "" ? agentUserCurrent : agentUserLast);
             string displayGWG = "";
 
-            if (agent.OS != "Mac OS X")
+            if (agent.OSType != "Mac OS X")
                 displayGWG = (agentDWG.Contains("(d") ? "Domain: " : "Workgroup: ") + agentDWG.Substring(0, agentDWG.IndexOf(" ("));
 
             MessageBoxResult result;
@@ -134,9 +132,11 @@ namespace KLCEx {
 
             return (result == MessageBoxResult.Yes);
         }
-        #endregion
+
+        #endregion Launch
 
         public delegate void HasConnected();
+
         public void UpdateGroupsAndViews() {
             Application.Current.Dispatcher.Invoke((Action)delegate {
                 progressRefresh.IsIndeterminate = true;
@@ -153,7 +153,7 @@ namespace KLCEx {
             int records = 0;
             int num = 0;
             do {
-                IRestResponse response = Kaseya.GetRequest(authToken, "api/v1.0/system/machinegroups?$orderby=MachineGroupName%20asc&$skip=" + num);
+                IRestResponse response = Kaseya.GetRequest("api/v1.0/system/machinegroups?$orderby=MachineGroupName%20asc&$skip=" + num);
                 dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
                 records = (int)result["TotalRecords"];
                 foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
@@ -164,8 +164,7 @@ namespace KLCEx {
                 num += 100;
             } while (num < records);
 
-            IRestResponse response2;
-            response2 = Kaseya.GetRequest(authToken, "api/v1.0/system/views");
+            IRestResponse response2 = Kaseya.GetRequest("api/v1.0/system/views");
             dynamic result2 = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response2.Content);
             //records = (int)result["TotalRecords"];
             foreach (Newtonsoft.Json.Linq.JObject child in result2["Result"].Children()) {
@@ -196,24 +195,22 @@ namespace KLCEx {
             btnLoadToken.Background = Brushes.Gold;
             SetConnectButtons(false);
 
-            Task.Run(() =>
-            {
+            Task.Run(() => {
                 HasConnected callback = new HasConnected(UpdateGroupsAndViews);
+                Kaseya.LoadToken(authToken);
                 KaseyaAuth auth = KaseyaAuth.ApiAuthX(authToken);
                 callback();
             });
         }
 
         private void TxtFilterMachineId_KeyDown(object sender, KeyEventArgs e) {
-            if(e.Key == Key.Enter) {
+            if (e.Key == Key.Enter)
                 SearchRefresh();
-            }
         }
 
         private void CmbOrg_KeyDown(object sender, KeyEventArgs e) {
-            if (e.Key == Key.Enter) {
+            if (e.Key == Key.Enter)
                 SearchRefresh();
-            }
         }
 
         private void CmbOrg_DropDownClosed(object sender, EventArgs e) {
@@ -225,7 +222,14 @@ namespace KLCEx {
         }
 
         private void SearchRefresh() {
+            if (bwRefresh != null) {
+                if (bwRefresh.IsBusy)
+                    return;
+            }
+
             model.ListMachine.Clear();
+            model.ListMachineRM.Clear();
+
             SetConnectButtons(false);
             if (authToken == null)
                 return;
@@ -235,9 +239,9 @@ namespace KLCEx {
             VSAView vsaView = (VSAView)cmbView.SelectedItem;
             string filterName = Regex.Replace(txtFilterMachineId.Text, "[^a-zA-Z0-9_.-]+", "", RegexOptions.Compiled);
 
-            BackgroundWorker bw = new BackgroundWorker();
+            bwRefresh = new BackgroundWorker();
             //bw.WorkerReportsProgress = true;
-            bw.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args) {
+            bwRefresh.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args) {
                 string root = (group != null ? group.GroupName.Replace(".root", "") : "");
 
                 //https://vsa-web.company.com.au/api/v1.0/assetmgmt/agents?$top=15&$filter=(MachineGroupId%20eq%2056591821512413912341567131M)%20and%20(ShowToolTip%20lt%20100%20or%20ShowToolTip%20eq%20null)&$orderby=AgentName%20asc
@@ -261,7 +265,7 @@ namespace KLCEx {
                         }
                     }
 
-                    IRestResponse response = Kaseya.GetRequest(authToken, query);
+                    IRestResponse response = Kaseya.GetRequest(query);
 
                     dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
                     if (result["Status"] != "OK")
@@ -279,23 +283,31 @@ namespace KLCEx {
                 } while (num < records);
             });
 
-            bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
+            bwRefresh.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
             delegate (object o, RunWorkerCompletedEventArgs args) {
                 progressRefresh.IsIndeterminate = false;
+
+                if (tabRM.IsSelected)
+                    btnRmLoad_Click(null, null);
             });
 
-            bw.RunWorkerAsync();
+            bwRefresh.RunWorkerAsync();
         }
 
         #region Buttons: Launch
+
         private Machine GetSelectedMachineByTab() {
-            if(tabApListSchedule.IsSelected) {
+            if (tabApListSchedule.IsSelected) {
                 AgentProcMHS apMHS = (AgentProcMHS)dataGridAgentsSchedule.SelectedValue;
-                if(apMHS != null && apMHS.Machine != null)
+                if (apMHS != null && apMHS.Machine != null)
                     return apMHS.Machine;
+            } else if (tabRM.IsSelected) {
+                MachineRM rm = (MachineRM)dataGridRM.SelectedValue;
+                if (rm != null)
+                    return rm.Machine;
             } else {
                 Machine agent = (Machine)dataGridAgents.SelectedValue;
-                if(agent != null)
+                if (agent != null)
                     return agent;
             }
 
@@ -378,7 +390,8 @@ namespace KLCEx {
             Machine agent = GetSelectedMachineByTab();
             Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlPrivate);
         }
-        #endregion
+
+        #endregion Buttons: Launch
 
         private void ChkUseMITM_Checked(object sender, RoutedEventArgs e) {
             useMITM = true;
@@ -394,15 +407,7 @@ namespace KLCEx {
             model.ListAgentProcLog.Clear();
             model.ListAgentProcScheduled.Clear();
 
-            Machine agent = null;
-
-            if (tabApListSchedule.IsSelected) {
-                AgentProcMHS apMHS = (AgentProcMHS)dataGridAgentsSchedule.SelectedValue;
-                if(apMHS != null)
-                    agent = apMHS.Machine;
-            } else {
-                agent = (Machine)dataGridAgents.SelectedValue;
-            }
+            Machine agent = GetSelectedMachineByTab();
 
             if (agent == null) {
                 txtApMachineName.Content = "No machine";
@@ -440,8 +445,7 @@ namespace KLCEx {
                 model.VSAViews.Add(new VSAView("", "< No View >"));
             });
 
-            IRestResponse response;
-            response = Kaseya.GetRequest(authToken, "api/v1.0/system/views");
+            IRestResponse response = Kaseya.GetRequest("api/v1.0/system/views");
             dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
             //records = (int)result["TotalRecords"];
             foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
@@ -492,7 +496,7 @@ namespace KLCEx {
                 int skip = 0;
                 IRestResponse response;
                 do {
-                    response = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs?$top=100&$orderby=AgentProcedureName%20asc" + (skip > 0 ? "&$skip=" + skip : ""));
+                    response = Kaseya.GetRequest("api/v1.0/automation/agentprocs?$top=100&$orderby=AgentProcedureName%20asc" + (skip > 0 ? "&$skip=" + skip : ""));
 
                     if (response.StatusCode != System.Net.HttpStatusCode.OK)
                         return;
@@ -587,18 +591,15 @@ namespace KLCEx {
             txtApMachineName.Content = agent.AgentNameOnly;
             txtApMachineGroup.Content = "." + agent.MachineGroup;
 
-            IRestResponse responseHistory;
-            responseHistory = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs/" + agent.Guid + "/history?$top=25&$orderby=LastExecutionTime%20desc");
+            IRestResponse responseHistory = Kaseya.GetRequest("api/v1.0/automation/agentprocs/" + agent.Guid + "/history?$top=25&$orderby=LastExecutionTime%20desc");
             dynamic resultHistory = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseHistory.Content);
             //int totalRecords = (int)result["TotalRecords"];
 
-            IRestResponse responseScheduled;
-            responseScheduled = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs/" + agent.Guid + "/scheduledprocs?$top=25&$orderby=NextExecTime%20desc");
+            IRestResponse responseScheduled = Kaseya.GetRequest("api/v1.0/automation/agentprocs/" + agent.Guid + "/scheduledprocs?$top=25&$orderby=NextExecTime%20desc");
             dynamic resultScheduled = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseScheduled.Content);
             //int totalRecords = (int)result["TotalRecords"];
 
-            IRestResponse responseLogs;
-            responseLogs = Kaseya.GetRequest(authToken, "api/v1.0/assetmgmt/logs/" + agent.Guid + "/agentprocedure?$top=25&$orderby=LastExecution%20desc");
+            IRestResponse responseLogs = Kaseya.GetRequest("api/v1.0/assetmgmt/logs/" + agent.Guid + "/agentprocedure?$top=25&$orderby=LastExecution%20desc");
             dynamic resultLogs = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseLogs.Content);
             //int totalRecords = (int)result["TotalRecords"];
 
@@ -636,7 +637,7 @@ namespace KLCEx {
                     AgentProcHistory history = null;
                     AgentProcScheduled scheduled = null;
 
-                    responseSchedule = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs/" + machine.Guid + "/scheduledprocs?$filter=AgentProcedureId eq " + agentProc.AgentProcedureId);
+                    responseSchedule = Kaseya.GetRequest("api/v1.0/automation/agentprocs/" + machine.Guid + "/scheduledprocs?$filter=AgentProcedureId eq " + agentProc.AgentProcedureId);
                     if (responseSchedule.StatusCode == System.Net.HttpStatusCode.OK) {
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseSchedule.Content);
                         int records = (int)result["TotalRecords"];
@@ -650,7 +651,7 @@ namespace KLCEx {
                         }
                     }
 
-                    responseHistory = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs/" + machine.Guid + "/history?$top=1&$filter=ScriptName eq '" + agentProc.AgentProcedureName + "'&$orderby=LastExecutionTime desc");
+                    responseHistory = Kaseya.GetRequest("api/v1.0/automation/agentprocs/" + machine.Guid + "/history?$top=1&$filter=ScriptName eq '" + agentProc.AgentProcedureName + "'&$orderby=LastExecutionTime desc");
                     if (responseHistory.StatusCode == System.Net.HttpStatusCode.OK) {
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseHistory.Content);
                         //int records = (int)result["TotalRecords"];
@@ -709,7 +710,7 @@ namespace KLCEx {
                     AgentProcHistory history = null;
                     AgentProcScheduled scheduled = null;
 
-                    responseSchedule = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs/" + machine.Guid + "/scheduledprocs?$filter=AgentProcedureId eq " + agentProc.AgentProcedureId);
+                    responseSchedule = Kaseya.GetRequest("api/v1.0/automation/agentprocs/" + machine.Guid + "/scheduledprocs?$filter=AgentProcedureId eq " + agentProc.AgentProcedureId);
                     if (responseSchedule.StatusCode == System.Net.HttpStatusCode.OK) {
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseSchedule.Content);
                         int records = (int)result["TotalRecords"];
@@ -723,7 +724,7 @@ namespace KLCEx {
                         }
                     }
 
-                    responseHistory = Kaseya.GetRequest(authToken, "api/v1.0/automation/agentprocs/" + machine.Guid + "/history?$top=1&$filter=ScriptName eq '" + agentProc.AgentProcedureName + "'&$orderby=LastExecutionTime desc");
+                    responseHistory = Kaseya.GetRequest("api/v1.0/automation/agentprocs/" + machine.Guid + "/history?$top=1&$filter=ScriptName eq '" + agentProc.AgentProcedureName + "'&$orderby=LastExecutionTime desc");
                     if (responseHistory.StatusCode == System.Net.HttpStatusCode.OK) {
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseHistory.Content);
                         //int records = (int)result["TotalRecords"];
@@ -758,6 +759,106 @@ namespace KLCEx {
         }
 
         private void dataGridAgentsSchedule_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            MachineSelectionChangedFromTab();
+        }
+
+        private void btnRmLoad_Click(object sender, RoutedEventArgs e) {
+            btnRmLoad.IsEnabled = false;
+            progressRefresh.IsIndeterminate = true;
+
+            model.ListMachineRM.Clear();
+
+            BackgroundWorker bw = new BackgroundWorker();
+            bw.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args) {
+                foreach (Machine machine in model.ListMachine) {
+                    //if (machine.OSTypeProfile != Machine.OSProfile.Other) continue;
+
+                    IRestResponse responseSummary = Kaseya.GetRequest("api/v1.0/assetmgmt/audit/" + machine.Guid + "/summary");
+                    string cAvProd = "";
+                    string cAvStatus = "";
+                    string cAvProdDbDate = "";
+                    string cEpsMaintNote = "";
+                    string cPatchCompliance = "";
+                    if (responseSummary.StatusCode == System.Net.HttpStatusCode.OK) {
+                        dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseSummary.Content);
+
+                        if (result["Result"] != null && result["Result"]["CustomFields"] != null) {
+                            if (result["Result"]["CustomFields"]["Antivirus Product"] != null)
+                                cAvProd = (string)result["Result"]["CustomFields"]["Antivirus Product"];
+                            if (result["Result"]["CustomFields"]["Antivirus Status"] != null)
+                                cAvStatus = (string)result["Result"]["CustomFields"]["Antivirus Status"];
+                            if (result["Result"]["CustomFields"]["Antivirus Product Database Date"] != null) {
+                                cAvProdDbDate = (string)result["Result"]["CustomFields"]["Antivirus Product Database Date"];
+                                if(cAvProdDbDate.Length > 0) {
+                                    DateTime cAvProdDbDate2;
+                                    if(DateTime.TryParse(cAvProdDbDate, out cAvProdDbDate2)) {
+                                        cAvProdDbDate = cAvProdDbDate2.ToString("u");
+                                    }
+                                }
+                            }
+                            if (result["Result"]["CustomFields"]["EPS Maint Note"] != null)
+                                cEpsMaintNote = (string)result["Result"]["CustomFields"]["EPS Maint Note"];
+                            if (result["Result"]["CustomFields"]["Patch Compliance"] != null)
+                                cPatchCompliance = (string)result["Result"]["CustomFields"]["Patch Compliance"];
+                        }
+                    }
+
+                    IRestResponse responseSecurity = Kaseya.GetRequest("api/v1.0/assetmgmt/audit/" + machine.Guid + "/software/securityproducts");
+                    Dictionary<string, bool> dAv = new Dictionary<string, bool>();
+                    if (responseSecurity.StatusCode == System.Net.HttpStatusCode.OK) {
+                        dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseSecurity.Content);
+                        foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
+                            if ((bool)child["IsActive"] == true && (string)child["ProductType"] == "Antivirus") {
+                                string product = (string)child["ProductName"];
+                                if (product == "Kaspersky Endpoint Security 10 for Windows")
+                                    product = "KAV";
+                                else if (product == "Sophos Anti-Virus")
+                                    product = "Sophos";
+                                else if (product.StartsWith("Trend Micro"))
+                                    product = "Trend Micro";
+                                else if (product == "Windows Defender" || product == "") {
+                                    continue;
+                                    //product = "Defender";
+                                }
+
+                                if (dAv.ContainsKey(product)) {
+                                    dAv[product] = dAv[product] || (bool)child["IsUpToDate"];
+                                } else {
+                                    dAv.Add(product, (bool)child["IsUpToDate"]);
+                                }
+                            }
+                        }
+                    }
+
+                    IRestResponse responsePatch = Kaseya.GetRequest("api/v1.0/assetmgmt/patch/" + machine.Guid + "/machineupdate/false?$filter=SchedTogether gt 0");
+                    int patchesMissing = 0;
+                    if (responseSecurity.StatusCode == System.Net.HttpStatusCode.OK) {
+                        dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responsePatch.Content);
+                        patchesMissing = (int)result["TotalRecords"];
+                    }
+
+                    Application.Current.Dispatcher.Invoke((Action)delegate {
+                        model.ListMachineRM.Add(new MachineRM(machine, string.Join(", ", dAv.Keys), string.Join(", ", dAv.Values), patchesMissing, cAvProd, cAvStatus, cAvProdDbDate, cEpsMaintNote, cPatchCompliance));
+                    });
+                }
+            });
+
+            bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
+            delegate (object o, RunWorkerCompletedEventArgs args) {
+                //Resize the columns to fit what's displayed
+                foreach (DataGridColumn c in dataGridRM.Columns) {
+                    c.Width = 0;
+                    c.Width = DataGridLength.Auto;
+                }
+
+                progressRefresh.IsIndeterminate = false;
+                btnRmLoad.IsEnabled = true;
+            });
+
+            bw.RunWorkerAsync();
+        }
+
+        private void dataGridRM_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             MachineSelectionChangedFromTab();
         }
 

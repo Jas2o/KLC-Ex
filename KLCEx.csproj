@@ -77,6 +77,7 @@
     <Compile Include="AgentProcScheduled.cs" />
     <Compile Include="Machine.cs" />
     <Compile Include="MachineGroup.cs" />
+    <Compile Include="MachineRM.cs" />
     <Compile Include="ViewModel.cs" />
     <Compile Include="VSAView.cs" />
     <Compile Include="WindowAuthToken.xaml.cs">
