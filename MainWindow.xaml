@@ -638,46 +638,53 @@
                     <StackPanel Background="#FFBBBBBB" Orientation="Vertical">
                         <Button
                             x:Name="btnConnectAltLaunch"
-                            Margin="0,5"
                             VerticalAlignment="Top"
                             Click="BtnConnectAltLaunch_Click"
                             Content="Alternative"
                             IsTabStop="False" />
                         <Button
                             x:Name="btnConnectAltShared"
-                            Margin="0,0,0,5"
                             VerticalAlignment="Top"
                             Click="BtnConnectAltShared_Click"
                             Content="Shared"
                             IsTabStop="False" />
                         <Button
                             x:Name="btnConnectAltPrivate"
-                            Margin="0,0,0,5"
                             VerticalAlignment="Top"
                             Click="BtnConnectAltPrivate_Click"
                             Content="Private"
                             IsTabStop="False" />
+                        <Button
+                            x:Name="btnConnectAltOneClick"
+                            Margin="0,0,0,5"
+                            VerticalAlignment="Top"
+                            Click="BtnConnectAltOneClick_Click"
+                            Content="1-Click"
+                            IsTabStop="False" />
 
                         <Button
                             x:Name="btnConnectOriginalLiveConnect"
-                            Margin="0,10,0,5"
                             VerticalAlignment="Top"
                             Click="BtnConnectOriginalLiveConnect_Click"
                             Content="Live Connect"
                             IsTabStop="False" />
                         <Button
                             x:Name="btnConnectOriginalShared"
-                            Margin="0,0,0,5"
                             VerticalAlignment="Top"
                             Click="BtnConnectOriginalShared_Click"
                             Content="Shared"
                             IsTabStop="False" />
                         <Button
                             x:Name="btnConnectOriginalPrivate"
-                            Margin="0,0,0,5"
                             VerticalAlignment="Top"
                             Click="BtnConnectOriginalPrivate_Click"
                             Content="Private"
+                            IsTabStop="False" />
+                        <Button
+                            x:Name="btnConnectOriginalOneClick"
+                            VerticalAlignment="Top"
+                            Click="BtnConnectOriginalOneClick_Click"
+                            Content="1-Click"
                             IsTabStop="False" />
                         <CheckBox
                             x:Name="chkUseMITM"
@@ -709,6 +716,13 @@
                     VerticalAlignment="Top"
                     Click="BtnConnectPrivate_Click"
                     Content="Private"
+                    IsTabStop="False" />
+                <Button
+                    x:Name="btnConnectOneClick"
+                    Margin="0,0,0,5"
+                    VerticalAlignment="Top"
+                    Click="BtnConnectOneClick_Click"
+                    Content="1-Click"
                     IsTabStop="False" />
                 <Button
                     x:Name="btnSendToProxy"
