@@ -17,6 +17,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Navigation;
 
 namespace KLCEx {
 
@@ -29,6 +30,7 @@ namespace KLCEx {
         private bool useMITM = false;
         private BackgroundWorker bwRefresh;
         private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(10);
+        private string vsaUserName;
 
         public MainWindow() {
             model = new ViewModel();
@@ -49,8 +51,9 @@ namespace KLCEx {
                 ConnectLMS();
             }
 
-            if (!File.Exists(@"C:\Program Files\Kaseya Live Connect-MITM\KaseyaLiveConnect.exe"))
-                chkUseMITM.Visibility = Visibility.Hidden;
+            if (!File.Exists(@"C:\Program Files\Kaseya Live Connect-MITM\KaseyaLiveConnect.exe") && !File.Exists(Environment.ExpandEnvironmentVariables(@"%localappdata%\Apps\Kaseya Live Connect-MITM\KaseyaLiveConnect.exe")))
+                chkUseMITM.Visibility = Visibility.Collapsed;
+            DisplayMachineNote(null);
         }
 
         private void btnLoadToken_Click(object sender, RoutedEventArgs e) {
@@ -207,6 +210,7 @@ namespace KLCEx {
                 HasConnected callback = new HasConnected(UpdateGroupsAndViews);
                 Kaseya.LoadToken(authToken);
                 KaseyaAuth auth = KaseyaAuth.ApiAuthX(authToken);
+                vsaUserName = auth.UserName.Replace("/", "_"); //Same as in RC logs
                 callback();
             });
         }
@@ -304,43 +308,44 @@ namespace KLCEx {
 
         #region Buttons: Launch
 
-        private Machine GetSelectedMachineByTab() {
+        private Tuple<Machine, int> GetSelectedMachineByTab() {
             if (tabApListSchedule.IsSelected) {
                 AgentProcMHS apMHS = (AgentProcMHS)dataGridAgentsSchedule.SelectedValue;
                 if (apMHS != null && apMHS.Machine != null)
-                    return apMHS.Machine;
+                    return Tuple.Create(apMHS.Machine, dataGridAgentsSchedule.SelectedItems.Count);
             } else if (tabRM.IsSelected) {
                 MachineRM rm = (MachineRM)dataGridRM.SelectedValue;
                 if (rm != null)
-                    return rm.Machine;
+                    return Tuple.Create(rm.Machine, dataGridRM.SelectedItems.Count);
             } else {
                 Machine agent = (Machine)dataGridAgents.SelectedValue;
                 if (agent != null)
-                    return agent;
+                    return Tuple.Create(agent, dataGridAgents.SelectedItems.Count);
             }
 
             return null;
         }
 
         private void BtnConnectLaunch_Click(object sender, RoutedEventArgs e) {
-            Machine agent = GetSelectedMachineByTab();
-            Launch(agent, LaunchMethod.System, LaunchAction.LiveConnect);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            Launch(agent.Item1, LaunchMethod.System, LaunchAction.LiveConnect);
         }
 
         private void BtnConnectShared_Click(object sender, RoutedEventArgs e) {
-            Machine agent = GetSelectedMachineByTab();
-            Launch(agent, LaunchMethod.System, LaunchAction.RemoteControlShared);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            Launch(agent.Item1, LaunchMethod.System, LaunchAction.RemoteControlShared);
         }
 
         private void BtnConnectPrivate_Click(object sender, RoutedEventArgs e) {
-            Machine agent = GetSelectedMachineByTab();
-            Launch(agent, LaunchMethod.System, LaunchAction.RemoteControlPrivate);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            Launch(agent.Item1, LaunchMethod.System, LaunchAction.RemoteControlPrivate);
         }
 
         private void BtnConnectOneClick_Click(object sender, RoutedEventArgs e)
         {
-            Machine agent = GetSelectedMachineByTab();
-            Launch(agent, LaunchMethod.System, LaunchAction.RemoteControlOneClick);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            if(agent.Item1.OneClickAccess)
+                Launch(agent.Item1, LaunchMethod.System, LaunchAction.RemoteControlOneClick);
         }
 
         private void BtnSendToProxy_Click(object sender, RoutedEventArgs e) {
@@ -376,45 +381,47 @@ namespace KLCEx {
         }
 
         private void BtnConnectAltLaunch_Click(object sender, RoutedEventArgs e) {
-            Machine agent = GetSelectedMachineByTab();
-            Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.LiveConnect);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            Launch(agent.Item1, LaunchMethod.DirectAlternative, LaunchAction.LiveConnect);
         }
 
         private void BtnConnectAltShared_Click(object sender, RoutedEventArgs e) {
-            Machine agent = GetSelectedMachineByTab();
-            Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlShared);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            Launch(agent.Item1, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlShared);
         }
 
         private void BtnConnectAltPrivate_Click(object sender, RoutedEventArgs e) {
-            Machine agent = GetSelectedMachineByTab();
-            Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlPrivate);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            Launch(agent.Item1, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlPrivate);
         }
 
         private void BtnConnectAltOneClick_Click(object sender, RoutedEventArgs e)
         {
-            Machine agent = GetSelectedMachineByTab();
-            Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlOneClick);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            if (agent.Item1.OneClickAccess)
+                Launch(agent.Item1, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlOneClick);
         }
 
         private void BtnConnectOriginalLiveConnect_Click(object sender, RoutedEventArgs e) {
-            Machine agent = GetSelectedMachineByTab();
-            Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.LiveConnect);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            Launch(agent.Item1, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.LiveConnect);
         }
 
         private void BtnConnectOriginalShared_Click(object sender, RoutedEventArgs e) {
-            Machine agent = GetSelectedMachineByTab();
-            Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlShared);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            Launch(agent.Item1, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlShared);
         }
 
         private void BtnConnectOriginalPrivate_Click(object sender, RoutedEventArgs e) {
-            Machine agent = GetSelectedMachineByTab();
-            Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlPrivate);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            Launch(agent.Item1, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlPrivate);
         }
 
         private void BtnConnectOriginalOneClick_Click(object sender, RoutedEventArgs e)
         {
-            Machine agent = GetSelectedMachineByTab();
-            Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlOneClick);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            if (agent.Item1.OneClickAccess)
+                Launch(agent.Item1, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlOneClick);
         }
 
         #endregion Buttons: Launch
@@ -428,44 +435,122 @@ namespace KLCEx {
         }
 
         private void MachineSelectionChangedFromTab() {
-            SetConnectButtons(true);
+            Tuple<Machine, int> agent = GetSelectedMachineByTab();
+            if (agent != null)
+            {
+                SetConnectButtons(true, agent.Item2, agent.Item1.OneClickAccess);
+                if(agent.Item2 == 1)
+                    DisplayMachineNote(agent.Item1);
+                else
+                    DisplayMachineNote(null);
+                //DisplayRCNotify(agent.Item1)
+            }
+            else
+            {
+                SetConnectButtons(false);
+                DisplayMachineNote(null);
+            }
             model.ListAgentProcHistory.Clear();
             model.ListAgentProcLog.Clear();
             model.ListAgentProcScheduled.Clear();
 
-            Machine agent = GetSelectedMachineByTab();
-
             if (agent == null) {
                 txtApMachineName.Content = "No machine";
                 txtApMachineGroup.Content = " selected to view.";
+                model.SelectedAgent = null;
             } else {
-                txtApMachineName.Content = agent.AgentNameOnly;
-                txtApMachineGroup.Content = "." + agent.MachineGroup;
+                txtApMachineName.Content = agent.Item1.AgentNameOnly;
+                txtApMachineGroup.Content = "." + agent.Item1.MachineGroup;
+                model.SelectedAgent = agent.Item1;
+            }
+        }
+
+        /*
+        public void DisplayRCNotify(LibKaseya.Enums.NotifyApproval policy)
+        {
+            switch (policy)
+            {
+                case LibKaseya.Enums.NotifyApproval.None:
+                    txtRCNotify.Visibility = Visibility.Collapsed;
+                    break;
+                case LibKaseya.Enums.NotifyApproval.NotifyOnly:
+                    txtRCNotify.Text = "Notification prompt only.";
+                    break;
+                case LibKaseya.Enums.NotifyApproval.ApproveAllowIfNoUser:
+                    txtRCNotify.Text = "Approve prompt - allow if no one logged in.";
+                    break;
+                case LibKaseya.Enums.NotifyApproval.ApproveDenyIfNoUser:
+                    txtRCNotify.Text = "Approve prompt - denied if no one logged in.";
+                    break;
+                default:
+                    txtRCNotify.Text = "Unknown RC notify policy: " + policy;
+                    break;
+            }
+        }
+        */
+
+        public void DisplayMachineNote(Machine agent)
+        {
+            if (agent == null || agent.MachineShowToolTip == 0 && agent.MachineNote.Length == 0)
+            {
+                txtSpecialInstructions.Visibility = txtMachineNote.Visibility = Visibility.Collapsed;
+                return;
+            } else
+            {
+                txtSpecialInstructions.Visibility = txtMachineNote.Visibility = Visibility.Visible;
             }
 
-            model.SelectedAgent = agent;
+            if (agent.MachineShowToolTip > 0)
+            {
+                txtSpecialInstructions.Text = "Special Instructions for " + agent.AgentNameOnly.ToUpper();
+                if (Enum.IsDefined(typeof(Machine.Badge), agent.MachineShowToolTip))
+                    txtSpecialInstructions.Text += " (" + Enum.GetName(typeof(Machine.Badge), agent.MachineShowToolTip) + ")";
+                else
+                    txtSpecialInstructions.Text += " (" + agent.MachineShowToolTip + ")";
+            }
+
+            if (agent.MachineNoteLink != null)
+            {
+                txtMachineNoteLink.NavigateUri = new Uri(agent.MachineNoteLink);
+                txtMachineNoteLinkText.Text = agent.MachineNoteLink;
+                txtMachineNoteText.Text = agent.MachineNote;
+            }
+            else
+            {
+                txtMachineNoteLinkText.Text = string.Empty;
+                txtMachineNoteText.Text = agent.MachineNote;
+            }
+
+        }
+
+        private void txtMachineNoteLink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo(e.Uri.ToString()) { UseShellExecute = true });
         }
 
         private void DataGridAgents_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             MachineSelectionChangedFromTab();
         }
 
-        private void SetConnectButtons(bool value) {
-            btnConnectLaunch.IsEnabled = value;
-            btnConnectShared.IsEnabled = value;
-            btnConnectPrivate.IsEnabled = value;
-            btnConnectOneClick.IsEnabled = value;
+        private void SetConnectButtons(bool value, int numSelected=0, bool IsOneClick=false) {
+            bool v = (value && numSelected == 1);
+            bool vOneClick = (IsOneClick && numSelected == 1);
+
+            btnConnectLaunch.IsEnabled = v;
+            btnConnectShared.IsEnabled = v;
+            btnConnectPrivate.IsEnabled = v;
+            btnConnectOneClick.IsEnabled = vOneClick;
             btnSendToProxy.IsEnabled = value;
 
-            btnConnectAltLaunch.IsEnabled = value;
-            btnConnectAltShared.IsEnabled = value;
-            btnConnectAltPrivate.IsEnabled = value;
-            btnConnectAltOneClick.IsEnabled = value;
+            btnConnectAltLaunch.IsEnabled = v;
+            btnConnectAltShared.IsEnabled = v;
+            btnConnectAltPrivate.IsEnabled = v;
+            btnConnectAltOneClick.IsEnabled = vOneClick;
 
-            btnConnectOriginalLiveConnect.IsEnabled = value;
-            btnConnectOriginalShared.IsEnabled = value;
-            btnConnectOriginalPrivate.IsEnabled = value;
-            btnConnectOriginalOneClick.IsEnabled = value;
+            btnConnectOriginalLiveConnect.IsEnabled = v;
+            btnConnectOriginalShared.IsEnabled = v;
+            btnConnectOriginalPrivate.IsEnabled = v;
+            btnConnectOriginalOneClick.IsEnabled = vOneClick;
         }
 
         private void MenuViewTest_Click(object sender, RoutedEventArgs e) {
@@ -928,6 +1013,81 @@ namespace KLCEx {
 
         private void dataGridRM_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             MachineSelectionChangedFromTab();
+        }
+
+        private async void btnRCLogs_Click(object sender, RoutedEventArgs e)
+        {
+            btnRCLogsLoad.IsEnabled = false;
+            progressRefresh.IsIndeterminate = true;
+
+            List<AgentRCLog> listRCLog = new List<AgentRCLog>();
+
+            List<Task> tasks = model.ListMachine.Select(async machine => {
+                await _semaphore.WaitAsync();
+
+                try
+                {
+                    IRestResponse responseLogs = await Kaseya.GetRequestAsync("api/v1.0/assetmgmt/logs/" + machine.Guid + "/remotecontrol?$orderby=LastActiveTime desc&$top=10");
+
+
+                    if (responseLogs.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseLogs.Content);
+
+                        if (result["Result"] != null)
+                        {
+
+                            foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children())
+                            {
+                                if (((string)child["Administrator"]).Contains(vsaUserName))
+                                {
+                                    listRCLog.Add(new AgentRCLog(machine.AgentNameOnly, child));
+                                }
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    _semaphore.Release();
+                }
+
+                //Application.Current.Dispatcher.Invoke((Action)delegate {
+                    //model.ListMachineRM.Add(new MachineRM(machine, string.Join(", ", dAv.Keys), string.Join(", ", dAv.Values), patchesMissing, cAvProd, cAvStatus, cAvProdDbDate, cEpsMaintNote, cPatchCompliance));
+                //});
+            }).ToList();
+
+            await Task.WhenAll(tasks);
+
+            
+
+            listRCLog = listRCLog.OrderBy(x => x.StartTime).ToList();
+
+            StringBuilder sb = new StringBuilder();
+            foreach (AgentRCLog log in listRCLog)
+            {
+                sb.AppendLine(string.Format("{0},{1},{2}", log.IsFor, log.StartTime.ToString("s"), log.LastActiveTime.ToString("s")));
+            }
+            txtRCLogs.Text = sb.ToString();
+
+            progressRefresh.IsIndeterminate = false;
+            btnRCLogsLoad.IsEnabled = true;
+        }
+
+        private void btnRCLogsLoadAdv_Click(object sender, RoutedEventArgs e)
+        {
+            if (progressRefresh.IsIndeterminate)
+                return;
+
+            WindowRCLogs winRCLogs = new WindowRCLogs(vsaUserName, model.MachineGroups.ToList());
+            winRCLogs.Owner = this;
+            winRCLogs.Show();
+        }
+
+        private void btnColumns_Click(object sender, RoutedEventArgs e)
+        {
+            model.ShowColumnNetwork = !model.ShowColumnNetwork;
+            model.ShowColumnExtras = !model.ShowColumnExtras;
         }
 
         /*

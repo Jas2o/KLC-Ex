@@ -76,6 +76,8 @@
     <Compile Include="AgentProcLog.cs" />
     <Compile Include="AgentProcMHS.cs" />
     <Compile Include="AgentProcScheduled.cs" />
+    <Compile Include="AgentRCLog.cs" />
+    <Compile Include="BindingProxy.cs" />
     <Compile Include="Machine.cs" />
     <Compile Include="MachineGroup.cs" />
     <Compile Include="MachineRM.cs" />
@@ -86,6 +88,9 @@
     </Compile>
     <Compile Include="WindowException.xaml.cs">
       <DependentUpon>WindowException.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WindowRCLogs.xaml.cs">
+      <DependentUpon>WindowRCLogs.xaml</DependentUpon>
     </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -106,6 +111,10 @@
     <Page Include="WindowException.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="WindowRCLogs.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>

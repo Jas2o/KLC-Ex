@@ -53,5 +53,27 @@ namespace KLCEx {
         protected void OnPropertyChange(string propertyName) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        private bool showColumnNetwork;
+        public bool ShowColumnNetwork
+        {
+            get { return showColumnNetwork; }
+            set
+            {
+                showColumnNetwork = value;
+                OnPropertyChange("ShowColumnNetwork");
+            }
+        }
+
+        private bool showColumnExtras;
+        public bool ShowColumnExtras
+        {
+            get { return showColumnExtras; }
+            set
+            {
+                showColumnExtras = value;
+                OnPropertyChange("ShowColumnExtras");
+            }
+        }
     }
 }
