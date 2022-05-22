@@ -34,7 +34,7 @@ namespace KLCEx
             InitializeComponent();
             progressBar.Visibility = Visibility.Collapsed;
 
-            vsaUserName = currentVsaUser;
+            txtInputUsername.Text = vsaUserName = currentVsaUser;
             listMachineGroups = machineGroups;
 
             dMachineGuidName = new Dictionary<string, string>();
@@ -143,6 +143,7 @@ namespace KLCEx
             progressBar.Visibility = Visibility.Visible;
             progressBar.IsIndeterminate = true;
 
+            string checkUsername = txtInputUsername.Text;
             List<AgentRCLog> listRCLog = new List<AgentRCLog>();
 
             List<Task> tasks = dMachineGuidName.Select(async machine => {
@@ -155,7 +156,7 @@ namespace KLCEx
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseLogs.Content);
                         if (result["Result"] != null) {
                             foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
-                                if (((string)child["Administrator"]).Contains(vsaUserName)) {
+                                if (((string)child["Administrator"]).Contains(checkUsername)) {
                                     listRCLog.Add(new AgentRCLog(machine.Value, child));
                                 }
                             }
@@ -172,7 +173,7 @@ namespace KLCEx
 
             StringBuilder sb = new StringBuilder();
             foreach (AgentRCLog log in listRCLog) {
-                sb.AppendLine(string.Format("{0},{1},{2}", log.IsFor, log.StartTime.ToString("s"), log.LastActiveTime.ToString("s")));
+                sb.AppendLine(string.Format("{0},{1},{2},{3}", log.IsFor, log.StartTime.ToString("s"), log.LastActiveTime.ToString("s"), log.Administrator));
             }
             txtOutput.Text = sb.ToString();
 
@@ -183,6 +184,16 @@ namespace KLCEx
             expanderInput.IsExpanded = false;
             expanderPreCheck.IsExpanded = false;
             expanderOutput.IsExpanded = true;
+        }
+
+        private void btnUsernameMe_Click(object sender, RoutedEventArgs e)
+        {
+            txtInputUsername.Text = vsaUserName;
+        }
+
+        private void btnUsernameBlank_Click(object sender, RoutedEventArgs e)
+        {
+            txtInputUsername.Text = "";
         }
     }
 }
