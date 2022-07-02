@@ -11,8 +11,8 @@ namespace KLCEx {
         public enum AgentStatus {
             Down = 0,
             Online = 1,
-            UserIdle = 2,
-            UserActive = 3 //This does not exist in Kaseya's status
+            UserActive = 11,
+            UserIdle = 12
         }
 
         public enum OSProfile {
@@ -142,8 +142,8 @@ namespace KLCEx {
 
             DisplayUser = (UserCurrent == "" ? UserLast : UserCurrent);
             DisplayStatus = (AgentStatus)Status;
-            if(Status == 1 && UserCurrent != "")
-                DisplayStatus = AgentStatus.UserActive;
+            //if(Status == 1 && UserCurrent != "") //No longer required
+                //DisplayStatus = AgentStatus.UserActive;
 
             if (child["ShowToolTip"].ToString().Length > 0)
                 MachineShowToolTip = (int)child["ShowToolTip"];

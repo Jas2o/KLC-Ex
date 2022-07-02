@@ -67,15 +67,5 @@
             Click="btnAuthCopy_Click"
             Content="Copy"
             Opacity="0.5" />
-
-        <Button
-            x:Name="btnAuthGetFromKLC"
-            Grid.Row="2"
-            Grid.Column="1"
-            Margin="5,0,0,0"
-            HorizontalAlignment="Left"
-            Click="btnAuthGetFromKLC_Click"
-            Content="Get from running KLC"
-            Opacity="0.5" />
     </Grid>
 </Window>

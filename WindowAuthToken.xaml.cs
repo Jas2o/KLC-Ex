@@ -1,5 +1,4 @@
 ﻿using LibKaseya;
-using System.Management;
 using System.Windows;
 
 namespace KLCEx {
@@ -50,6 +49,7 @@ namespace KLCEx {
 
         private void btnAuthGetFromKLC_Click(object sender, RoutedEventArgs e)
         {
+            /* //Not .NET 6 compatible
             ManagementClass mngmtClass = new ManagementClass("Win32_Process");
             foreach (ManagementObject o in mngmtClass.GetInstances())
             {
@@ -67,6 +67,7 @@ namespace KLCEx {
                     }
                 }
             }
+            */
         }
     }
 }

@@ -7,7 +7,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Management;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -109,9 +108,10 @@ namespace KLCEx {
             else if (action == LaunchAction.Terminal)
                 command.SetForTerminal(agent.OSType == "Mac OS X");
 
-            if (method == LaunchMethod.System)
-                Process.Start("liveconnect:///" + Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(command))));
-            else if (method == LaunchMethod.DirectKaseya)
+            if (method == LaunchMethod.System) {
+                Uri uri = new Uri("liveconnect:///" + Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(command))));
+                Process.Start(new ProcessStartInfo() { FileName = uri.ToString(), UseShellExecute = true }); //Fails
+            } else if (method == LaunchMethod.DirectKaseya)
                 command.Launch(false, LaunchExtra.None);
             else if (method == LaunchMethod.DirectKaseyaMITM)
                 command.Launch(false, LaunchExtra.Hawk);
@@ -209,7 +209,7 @@ namespace KLCEx {
             Task.Run(() => {
                 HasConnected callback = new HasConnected(UpdateGroupsAndViews);
                 Kaseya.LoadToken(authToken);
-                KaseyaAuth auth = KaseyaAuth.ApiAuthX(authToken);
+                KaseyaAuth auth = KaseyaAuth.ApiAuthX(authToken, Kaseya.DefaultServer);
                 vsaUserName = auth.UserName.Replace("/", "_"); //Same as in RC logs
                 callback();
             });
@@ -255,8 +255,6 @@ namespace KLCEx {
             //bw.WorkerReportsProgress = true;
             bwRefresh.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args) {
                 string root = (group != null ? group.GroupName.Replace(".root", "") : "");
-
-                //https://vsa-web.company.com.au/api/v1.0/assetmgmt/agents?$top=15&$filter=(MachineGroupId%20eq%2056591821512413912341567131M)%20and%20(ShowToolTip%20lt%20100%20or%20ShowToolTip%20eq%20null)&$orderby=AgentName%20asc
 
                 int records = 0;
                 int num = 0;
@@ -356,9 +354,9 @@ namespace KLCEx {
                 foreach (AgentProcMHS apMHS in dataGridAgentsSchedule.SelectedItems) {
                     Process process = new Process();
                     if (Process.GetProcessesByName("KLCProxyClassic").Any())
-                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\KLCProxyClassic.exe";
+                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLCProxyClassic.exe";
                     else
-                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\KLCProxy.exe";
+                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLCProxy.exe";
                     process.StartInfo.Arguments = apMHS.Machine.Guid;
                     process.Start();
                     process.WaitForExit(2000);
@@ -370,9 +368,9 @@ namespace KLCEx {
                 foreach (Machine agent in dataGridAgents.SelectedItems) {
                     Process process = new Process();
                     if (Process.GetProcessesByName("KLCProxyClassic").Any())
-                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\KLCProxyClassic.exe";
+                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLCProxyClassic.exe";
                     else
-                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\KLCProxy.exe";
+                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLCProxy.exe";
                     process.StartInfo.Arguments = agent.Guid;
                     process.Start();
                     process.WaitForExit(2000);
