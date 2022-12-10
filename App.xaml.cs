@@ -1,8 +1,11 @@
-﻿using System;
+﻿using LibKaseya;
+using nucs.JsonSettings;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,6 +15,8 @@ namespace KLCEx {
     /// Interaction logic for App.xaml
     /// </summary>
     public partial class App : Application {
+
+        public static KLCShared Shared;
 
         public App() : base() {
             if (!Debugger.IsAttached) {
@@ -24,11 +29,26 @@ namespace KLCEx {
                     ShowUnhandledException(args.Exception, "Dispatcher.UnhandledException");
                 };
             }
+
+            string pathShared = Path.GetDirectoryName(Environment.ProcessPath) + @"\KLC-Shared.json";
+            if (File.Exists(pathShared))
+                Shared = JsonSettings.Load<KLCShared>(pathShared);
+            else
+                Shared = JsonSettings.Construct<KLCShared>(pathShared);
         }
 
         void ShowUnhandledException(Exception e, string unhandledExceptionType) {
             new WindowException(e, unhandledExceptionType).Show(); //, Debugger.IsAttached
         }
 
+        private void Application_Startup(object sender, StartupEventArgs e)
+        {
+            foreach (string vsa in App.Shared.VSA)
+            {
+                Kaseya.Start(vsa, KaseyaAuth.GetStoredAuth(vsa));
+            }
+
+            new MainWindow().Show();
+        }
     }
 }

@@ -25,15 +25,17 @@ namespace KLCEx
     public partial class WindowRCLogs : Window
     {
         private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(10);
+        private string vsa;
         private string vsaUserName;
         private List<MachineGroup> listMachineGroups;
         private Dictionary<string, string> dMachineGuidName;
 
-        public WindowRCLogs(string currentVsaUser, List<MachineGroup> machineGroups)
+        public WindowRCLogs(string currentVsa, string currentVsaUser, List<MachineGroup> machineGroups)
         {
             InitializeComponent();
             progressBar.Visibility = Visibility.Collapsed;
 
+            vsa = currentVsa;
             txtInputUsername.Text = vsaUserName = currentVsaUser;
             listMachineGroups = machineGroups;
 
@@ -74,7 +76,7 @@ namespace KLCEx
                                 query += "?$top=50&$filter=endswith(MachineGroup,%20'" + root + "')&$orderby=AgentName%20asc&$skip=" + num;
                             else
                                 query += "?$top=50&$filter=(MachineGroupId%20eq%20" + group.GroupId + "M)&$orderby=AgentName%20asc&$skip=" + num;
-                            IRestResponse response = Kaseya.GetRequest(query);
+                            IRestResponse response = Kaseya.GetRequest(vsa, query);
 
                             dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
                             if (result["Status"] != "OK")
@@ -102,7 +104,7 @@ namespace KLCEx
                     do {
                         string query = "api/v1.0/assetmgmt/agents?$top=50&$filter=substringof('" + line + "',%20ComputerName)&$orderby=AgentName%20asc&$skip=" + num;
 
-                        IRestResponse response = Kaseya.GetRequest(query);
+                        IRestResponse response = Kaseya.GetRequest(vsa, query);
 
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
                         if (result["Status"] != "OK")
@@ -150,7 +152,7 @@ namespace KLCEx
                 await _semaphore.WaitAsync();
 
                 try {
-                    IRestResponse responseLogs = await Kaseya.GetRequestAsync("api/v1.0/assetmgmt/logs/" + machine.Key + "/remotecontrol?$orderby=LastActiveTime desc&$top=10");
+                    IRestResponse responseLogs = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/logs/" + machine.Key + "/remotecontrol?$orderby=LastActiveTime desc&$top=10");
 
                     if (responseLogs.StatusCode == System.Net.HttpStatusCode.OK) {
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseLogs.Content);

@@ -29,6 +29,7 @@ namespace KLCEx {
         private bool useMITM = false;
         private BackgroundWorker bwRefresh;
         private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(10);
+        private string vsa;
         private string vsaUserName;
 
         public MainWindow() {
@@ -36,11 +37,21 @@ namespace KLCEx {
             this.DataContext = model;
             InitializeComponent();
             txtVersion.Text = Properties.Resources.BuildDate.Trim();
-
-            Kaseya.Start();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e) {
+            foreach (KeyValuePair<string, KaseyaVSA> v in Kaseya.VSA)
+            {
+                if(v.Value.Token != null)
+                {
+                    vsa = v.Key;
+                    authToken = v.Value.Token;
+                    ConnectVSA();
+                    break;
+                }
+            }
+
+            /*
             string savedAuthToken = KaseyaAuth.GetStoredAuth();
             string[] args = Environment.GetCommandLineArgs();
             if (args.Length > 1 && args[1].Contains("klcex:"))
@@ -49,6 +60,7 @@ namespace KLCEx {
                 authToken = savedAuthToken;
                 ConnectLMS();
             }
+            */
 
             if (!File.Exists(@"C:\Program Files\Kaseya Live Connect-MITM\KaseyaLiveConnect.exe") && !File.Exists(Environment.ExpandEnvironmentVariables(@"%localappdata%\Apps\Kaseya Live Connect-MITM\KaseyaLiveConnect.exe")))
                 chkUseMITM.Visibility = Visibility.Collapsed;
@@ -56,19 +68,16 @@ namespace KLCEx {
         }
 
         private void btnLoadToken_Click(object sender, RoutedEventArgs e) {
-            string savedAuthToken = KaseyaAuth.GetStoredAuth();
-
-            WindowAuthToken dialog = new WindowAuthToken {
+            WindowAuthToken entry = new WindowAuthToken()
+            {
                 Owner = this
             };
-            if (savedAuthToken != null)
-                dialog.ResponseText = savedAuthToken;
-            bool accept = (bool)dialog.ShowDialog();
+            if (entry.ShowDialog() == true)
+            {
+                vsa = entry.ReturnAddress;
+                authToken = entry.ReturnToken;
 
-            if (accept && dialog.ResponseText.Length > 0) {
-                authToken = dialog.ResponseText;
-
-                ConnectLMS();
+                ConnectVSA();
             }
         }
 
@@ -93,7 +102,7 @@ namespace KLCEx {
             if (agent == null)
                 return;
 
-            KLCCommand command = KLCCommand.Example(agent.Guid, authToken);
+            KLCCommand command = KLCCommand.Example(vsa, agent.Guid, authToken);
             //LiveConnect is default
             if (action == LaunchAction.RemoteControlShared)
             {
@@ -164,7 +173,7 @@ namespace KLCEx {
             int records = 0;
             int num = 0;
             do {
-                IRestResponse response = Kaseya.GetRequest("api/v1.0/system/machinegroups?$orderby=MachineGroupName%20asc&$skip=" + num);
+                IRestResponse response = Kaseya.GetRequest(vsa, "api/v1.0/system/machinegroups?$orderby=MachineGroupName%20asc&$skip=" + num);
                 dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
                 records = (int)result["TotalRecords"];
                 foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
@@ -175,7 +184,7 @@ namespace KLCEx {
                 num += 100;
             } while (num < records);
 
-            IRestResponse response2 = Kaseya.GetRequest("api/v1.0/system/views");
+            IRestResponse response2 = Kaseya.GetRequest(vsa, "api/v1.0/system/views");
             dynamic result2 = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response2.Content);
             //records = (int)result["TotalRecords"];
             foreach (Newtonsoft.Json.Linq.JObject child in result2["Result"].Children()) {
@@ -200,18 +209,30 @@ namespace KLCEx {
             });
         }
 
-        private void ConnectLMS() {
+        private void ConnectVSA() {
             //api/v1.0/system/machinegroups?$top=5&$filter=(substringof(%27ramvek%27,tolower(MachineGroupName))%20eq%20true)&$orderby=MachineGroupName%20asc
+            this.Title = "KLCExplorer - " + vsa;
             btnLoadToken.Content = "Loading...";
             btnLoadToken.Background = Brushes.Gold;
             SetConnectButtons(false);
 
             Task.Run(() => {
                 HasConnected callback = new HasConnected(UpdateGroupsAndViews);
-                Kaseya.LoadToken(authToken);
-                KaseyaAuth auth = KaseyaAuth.ApiAuthX(authToken, Kaseya.DefaultServer);
-                vsaUserName = auth.UserName.Replace("/", "_"); //Same as in RC logs
-                callback();
+                //Kaseya.LoadToken(vsa, authToken);
+                try
+                {
+                    KaseyaAuth auth = KaseyaAuth.ApiAuthX(authToken, vsa);
+                    vsaUserName = auth.UserName.Replace("/", "_"); //Same as in RC logs
+                    callback();
+                } catch(Exception)
+                {
+                    Application.Current.Dispatcher.Invoke((Action)delegate
+                    {
+                        btnLoadToken.Content = "Load Token";
+                        btnLoadToken.Opacity = 1.0;
+                        btnLoadToken.Background = Brushes.DarkOrange;
+                    });
+                }
             });
         }
 
@@ -275,7 +296,7 @@ namespace KLCEx {
                         }
                     }
 
-                    IRestResponse response = Kaseya.GetRequest(query);
+                    IRestResponse response = Kaseya.GetRequest(vsa, query);
 
                     dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
                     if (result["Status"] != "OK")
@@ -353,11 +374,8 @@ namespace KLCEx {
 
                 foreach (AgentProcMHS apMHS in dataGridAgentsSchedule.SelectedItems) {
                     Process process = new Process();
-                    if (Process.GetProcessesByName("KLCProxyClassic").Any())
-                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLCProxyClassic.exe";
-                    else
-                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLCProxy.exe";
-                    process.StartInfo.Arguments = apMHS.Machine.Guid;
+                    process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLCProxy.exe";
+                    process.StartInfo.Arguments = string.Format("{0}@{1}", apMHS.Machine.Guid, vsa);
                     process.Start();
                     process.WaitForExit(2000);
                 }
@@ -367,11 +385,8 @@ namespace KLCEx {
 
                 foreach (Machine agent in dataGridAgents.SelectedItems) {
                     Process process = new Process();
-                    if (Process.GetProcessesByName("KLCProxyClassic").Any())
-                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLCProxyClassic.exe";
-                    else
-                        process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLCProxy.exe";
-                    process.StartInfo.Arguments = agent.Guid;
+                    process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLCProxy.exe";
+                    process.StartInfo.Arguments = string.Format("{0}@{1}", agent.Guid, vsa);
                     process.Start();
                     process.WaitForExit(2000);
                 }
@@ -557,7 +572,7 @@ namespace KLCEx {
                 model.VSAViews.Add(new VSAView("", "< No View >"));
             });
 
-            IRestResponse response = Kaseya.GetRequest("api/v1.0/system/views");
+            IRestResponse response = Kaseya.GetRequest(vsa, "api/v1.0/system/views");
             dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
             //records = (int)result["TotalRecords"];
             foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
@@ -608,7 +623,7 @@ namespace KLCEx {
                 int skip = 0;
                 IRestResponse response;
                 do {
-                    response = Kaseya.GetRequest("api/v1.0/automation/agentprocs?$top=100&$orderby=AgentProcedureName%20asc" + (skip > 0 ? "&$skip=" + skip : ""));
+                    response = Kaseya.GetRequest(vsa, "api/v1.0/automation/agentprocs?$top=100&$orderby=AgentProcedureName%20asc" + (skip > 0 ? "&$skip=" + skip : ""));
 
                     if (response.StatusCode != System.Net.HttpStatusCode.OK)
                         return;
@@ -703,15 +718,15 @@ namespace KLCEx {
             txtApMachineName.Content = agent.AgentNameOnly;
             txtApMachineGroup.Content = "." + agent.MachineGroup;
 
-            IRestResponse responseHistory = Kaseya.GetRequest("api/v1.0/automation/agentprocs/" + agent.Guid + "/history?$top=25&$orderby=LastExecutionTime%20desc");
+            IRestResponse responseHistory = Kaseya.GetRequest(vsa, "api/v1.0/automation/agentprocs/" + agent.Guid + "/history?$top=25&$orderby=LastExecutionTime%20desc");
             dynamic resultHistory = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseHistory.Content);
             //int totalRecords = (int)result["TotalRecords"];
 
-            IRestResponse responseScheduled = Kaseya.GetRequest("api/v1.0/automation/agentprocs/" + agent.Guid + "/scheduledprocs?$top=25&$orderby=NextExecTime%20desc");
+            IRestResponse responseScheduled = Kaseya.GetRequest(vsa, "api/v1.0/automation/agentprocs/" + agent.Guid + "/scheduledprocs?$top=25&$orderby=NextExecTime%20desc");
             dynamic resultScheduled = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseScheduled.Content);
             //int totalRecords = (int)result["TotalRecords"];
 
-            IRestResponse responseLogs = Kaseya.GetRequest("api/v1.0/assetmgmt/logs/" + agent.Guid + "/agentprocedure?$top=25&$orderby=LastExecution%20desc");
+            IRestResponse responseLogs = Kaseya.GetRequest(vsa, "api/v1.0/assetmgmt/logs/" + agent.Guid + "/agentprocedure?$top=25&$orderby=LastExecution%20desc");
             dynamic resultLogs = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseLogs.Content);
             //int totalRecords = (int)result["TotalRecords"];
 
@@ -752,7 +767,7 @@ namespace KLCEx {
                 AgentProcScheduled scheduled = null;
 
                 try {    
-                    IRestResponse responseSchedule = await Kaseya.GetRequestAsync("api/v1.0/automation/agentprocs/" + machine.Guid + "/scheduledprocs?$filter=AgentProcedureId eq " + agentProc.AgentProcedureId);
+                    IRestResponse responseSchedule = await Kaseya.GetRequestAsync(vsa, "api/v1.0/automation/agentprocs/" + machine.Guid + "/scheduledprocs?$filter=AgentProcedureId eq " + agentProc.AgentProcedureId);
                     if (responseSchedule.StatusCode == System.Net.HttpStatusCode.OK) {
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseSchedule.Content);
                         int records = (int)result["TotalRecords"];
@@ -766,7 +781,7 @@ namespace KLCEx {
                         }
                     }
 
-                    IRestResponse responseHistory = await Kaseya.GetRequestAsync("api/v1.0/automation/agentprocs/" + machine.Guid + "/history?$top=1&$filter=ScriptName eq '" + agentProc.AgentProcedureName + "'&$orderby=LastExecutionTime desc");
+                    IRestResponse responseHistory = await Kaseya.GetRequestAsync(vsa, "api/v1.0/automation/agentprocs/" + machine.Guid + "/history?$top=1&$filter=ScriptName eq '" + agentProc.AgentProcedureName + "'&$orderby=LastExecutionTime desc");
                     if (responseHistory.StatusCode == System.Net.HttpStatusCode.OK) {
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseHistory.Content);
                         //int records = (int)result["TotalRecords"];
@@ -833,7 +848,7 @@ namespace KLCEx {
                     AgentProcHistory history = null;
                     AgentProcScheduled scheduled = null;
 
-                    responseSchedule = Kaseya.GetRequest("api/v1.0/automation/agentprocs/" + machine.Guid + "/scheduledprocs?$filter=AgentProcedureId eq " + agentProc.AgentProcedureId);
+                    responseSchedule = Kaseya.GetRequest(vsa, "api/v1.0/automation/agentprocs/" + machine.Guid + "/scheduledprocs?$filter=AgentProcedureId eq " + agentProc.AgentProcedureId);
                     if (responseSchedule.StatusCode == System.Net.HttpStatusCode.OK) {
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseSchedule.Content);
                         int records = (int)result["TotalRecords"];
@@ -847,7 +862,7 @@ namespace KLCEx {
                         }
                     }
 
-                    responseHistory = Kaseya.GetRequest("api/v1.0/automation/agentprocs/" + machine.Guid + "/history?$top=1&$filter=ScriptName eq '" + agentProc.AgentProcedureName + "'&$orderby=LastExecutionTime desc");
+                    responseHistory = Kaseya.GetRequest(vsa, "api/v1.0/automation/agentprocs/" + machine.Guid + "/history?$top=1&$filter=ScriptName eq '" + agentProc.AgentProcedureName + "'&$orderby=LastExecutionTime desc");
                     if (responseHistory.StatusCode == System.Net.HttpStatusCode.OK) {
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseHistory.Content);
                         //int records = (int)result["TotalRecords"];
@@ -905,7 +920,7 @@ namespace KLCEx {
 
                     try
                     {
-                        IRestResponse responseSummary = await Kaseya.GetRequestAsync("api/v1.0/assetmgmt/audit/" + machine.Guid + "/summary");
+                        IRestResponse responseSummary = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/audit/" + machine.Guid + "/summary");
 
                         
                         if (responseSummary.StatusCode == System.Net.HttpStatusCode.OK)
@@ -937,7 +952,7 @@ namespace KLCEx {
                             }
                         }
 
-                        IRestResponse responseSecurity = await Kaseya.GetRequestAsync("api/v1.0/assetmgmt/audit/" + machine.Guid + "/software/securityproducts");
+                        IRestResponse responseSecurity = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/audit/" + machine.Guid + "/software/securityproducts");
                         if (responseSecurity.StatusCode == System.Net.HttpStatusCode.OK)
                         {
                             dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseSecurity.Content);
@@ -970,7 +985,7 @@ namespace KLCEx {
                             }
                         }
 
-                        IRestResponse responsePatch = await Kaseya.GetRequestAsync("api/v1.0/assetmgmt/patch/" + machine.Guid + "/machineupdate/false?$filter=SchedTogether gt 0");
+                        IRestResponse responsePatch = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/patch/" + machine.Guid + "/machineupdate/false?$filter=SchedTogether gt 0");
                         if (responseSecurity.StatusCode == System.Net.HttpStatusCode.OK)
                         {
                             dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responsePatch.Content);
@@ -1025,7 +1040,7 @@ namespace KLCEx {
 
                 try
                 {
-                    IRestResponse responseLogs = await Kaseya.GetRequestAsync("api/v1.0/assetmgmt/logs/" + machine.Guid + "/remotecontrol?$orderby=LastActiveTime desc&$top=10");
+                    IRestResponse responseLogs = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/logs/" + machine.Guid + "/remotecontrol?$orderby=LastActiveTime desc&$top=10");
 
 
                     if (responseLogs.StatusCode == System.Net.HttpStatusCode.OK)
@@ -1077,7 +1092,7 @@ namespace KLCEx {
             if (progressRefresh.IsIndeterminate)
                 return;
 
-            WindowRCLogs winRCLogs = new WindowRCLogs(vsaUserName, model.MachineGroups.ToList());
+            WindowRCLogs winRCLogs = new WindowRCLogs(vsa, vsaUserName, model.MachineGroups.ToList());
             winRCLogs.Owner = this;
             winRCLogs.Show();
         }

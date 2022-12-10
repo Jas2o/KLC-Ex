@@ -8,6 +8,7 @@
     Title="KLCExplorer: Auth Token"
     Width="320"
     MinHeight="70"
+    Loaded="Window_Loaded"
     ResizeMode="NoResize"
     SizeToContent="Height"
     WindowStartupLocation="CenterOwner"
@@ -15,6 +16,7 @@
     <Grid Margin="5">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition />
             <RowDefinition />
             <RowDefinition />
         </Grid.RowDefinitions>
@@ -27,43 +29,45 @@
             Grid.ColumnSpan="3"
             Margin="0,0,0,5"
             TextWrapping="Wrap">
-            Usually you would load your token via KLCProxy, you can also get it while Kaseya Live Connect is running.
+            Usually you would load your token via KLCProxy.
         </TextBlock>
-        <TextBlock
-            Grid.Row="1"
-            Width="34"
-            Height="16"
-            Margin="5,3,0,9"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Center"
-            TextWrapping="Wrap"><Run Text="Token:" /></TextBlock>
-        <PasswordBox
-            x:Name="txtAuthToken"
+        <Label Grid.Row="1" Content="VSA:" />
+        <ComboBox
+            x:Name="cmbAddress"
             Grid.Row="1"
             Grid.Column="1"
             Grid.ColumnSpan="2"
-            Height="23"
             Margin="5,0,0,5"
-            VerticalAlignment="Center" />
+            DropDownClosed="cmbAddress_DropDownClosed"
+            IsEditable="True"
+            KeyUp="cmbAddress_KeyUp" />
+        <Label Grid.Row="2" Content="Token:" />
+        <PasswordBox
+            x:Name="txtAuthToken"
+            Grid.Row="2"
+            Grid.RowSpan="2"
+            Grid.Column="1"
+            Grid.ColumnSpan="2"
+            Height="23"
+            Margin="5,0,0,0"
+            VerticalAlignment="Top" />
         <Button
             x:Name="btnAuthSave"
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="2"
             Width="100"
             Height="20"
-            Margin="0"
-            HorizontalAlignment="Right"
+            HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Click="OKButton_Click"
             Content="Save for session" />
         <Button
             x:Name="btnAuthCopy"
-            Grid.Row="2"
+            Grid.Row="4"
             Width="40"
             Height="20"
-            Margin="0"
             HorizontalAlignment="Center"
-            VerticalAlignment="Top"
+            VerticalAlignment="Center"
             Click="btnAuthCopy_Click"
             Content="Copy"
             Opacity="0.5" />
