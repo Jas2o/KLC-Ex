@@ -318,8 +318,7 @@ namespace KLCEx {
             delegate (object o, RunWorkerCompletedEventArgs args) {
                 progressRefresh.IsIndeterminate = false;
 
-                if (tabRM.IsSelected)
-                    btnRmLoad_Click(null, null);
+                //if (tabRM.IsSelected) btnRmLoad_Click(null, null);
             });
 
             bwRefresh.RunWorkerAsync();
@@ -327,44 +326,52 @@ namespace KLCEx {
 
         #region Buttons: Launch
 
-        private Tuple<Machine, int> GetSelectedMachineByTab() {
+        private List<Machine> GetSelectedMachineByTab() {
+            List<Machine> list = new List<Machine>();
+
             if (tabApListSchedule.IsSelected) {
-                AgentProcMHS apMHS = (AgentProcMHS)dataGridAgentsSchedule.SelectedValue;
-                if (apMHS != null && apMHS.Machine != null)
-                    return Tuple.Create(apMHS.Machine, dataGridAgentsSchedule.SelectedItems.Count);
-            } else if (tabRM.IsSelected) {
+                foreach (AgentProcMHS apMHS in dataGridAgentsSchedule.SelectedItems)
+                {
+                    if (apMHS != null && apMHS.Machine != null)
+                        list.Add(apMHS.Machine);
+                }
+            } /* else if (tabRM.IsSelected) {
                 MachineRM rm = (MachineRM)dataGridRM.SelectedValue;
                 if (rm != null)
                     return Tuple.Create(rm.Machine, dataGridRM.SelectedItems.Count);
-            } else {
-                Machine agent = (Machine)dataGridAgents.SelectedValue;
-                if (agent != null)
-                    return Tuple.Create(agent, dataGridAgents.SelectedItems.Count);
+            } */ else {
+                foreach(Machine agent in dataGridAgents.SelectedItems)
+                {
+                    list.Add(agent);
+                }
             }
 
-            return null;
+            return list;
         }
 
         private void BtnConnectLaunch_Click(object sender, RoutedEventArgs e) {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            Launch(agent.Item1, LaunchMethod.System, LaunchAction.LiveConnect);
+            List<Machine> agents = GetSelectedMachineByTab();
+            foreach(Machine agent in agents)
+                Launch(agent, LaunchMethod.System, LaunchAction.LiveConnect);
         }
 
         private void BtnConnectShared_Click(object sender, RoutedEventArgs e) {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            Launch(agent.Item1, LaunchMethod.System, LaunchAction.RemoteControlShared);
+            List<Machine> agents = GetSelectedMachineByTab();
+            foreach (Machine agent in agents)
+                Launch(agent, LaunchMethod.System, LaunchAction.RemoteControlShared);
         }
 
         private void BtnConnectPrivate_Click(object sender, RoutedEventArgs e) {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            Launch(agent.Item1, LaunchMethod.System, LaunchAction.RemoteControlPrivate);
+            List<Machine> agents = GetSelectedMachineByTab();
+            foreach (Machine agent in agents)
+                Launch(agent, LaunchMethod.System, LaunchAction.RemoteControlPrivate);
         }
 
         private void BtnConnectOneClick_Click(object sender, RoutedEventArgs e)
         {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            if(agent.Item1.OneClickAccess)
-                Launch(agent.Item1, LaunchMethod.System, LaunchAction.RemoteControlOneClick);
+            List<Machine> agents = GetSelectedMachineByTab();
+            if (agents.Count == 1 && agents[0].OneClickAccess)
+                Launch(agents[0], LaunchMethod.System, LaunchAction.RemoteControlOneClick);
         }
 
         private void BtnSendToProxy_Click(object sender, RoutedEventArgs e) {
@@ -394,47 +401,53 @@ namespace KLCEx {
         }
 
         private void BtnConnectAltLaunch_Click(object sender, RoutedEventArgs e) {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            Launch(agent.Item1, LaunchMethod.DirectAlternative, LaunchAction.LiveConnect);
+            List<Machine> agents = GetSelectedMachineByTab();
+            foreach (Machine agent in agents)
+                Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.LiveConnect);
         }
 
         private void BtnConnectAltShared_Click(object sender, RoutedEventArgs e) {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            Launch(agent.Item1, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlShared);
+            List<Machine> agents = GetSelectedMachineByTab();
+            foreach (Machine agent in agents)
+                Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlShared);
         }
 
         private void BtnConnectAltPrivate_Click(object sender, RoutedEventArgs e) {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            Launch(agent.Item1, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlPrivate);
+            List<Machine> agents = GetSelectedMachineByTab();
+            foreach (Machine agent in agents)
+                Launch(agent, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlPrivate);
         }
 
         private void BtnConnectAltOneClick_Click(object sender, RoutedEventArgs e)
         {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            if (agent.Item1.OneClickAccess)
-                Launch(agent.Item1, LaunchMethod.DirectAlternative, LaunchAction.RemoteControlOneClick);
+            List<Machine> agents = GetSelectedMachineByTab();
+            if (agents.Count == 1 && agents[0].OneClickAccess)
+                Launch(agents[0], LaunchMethod.DirectAlternative, LaunchAction.RemoteControlOneClick);
         }
 
         private void BtnConnectOriginalLiveConnect_Click(object sender, RoutedEventArgs e) {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            Launch(agent.Item1, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.LiveConnect);
+            List<Machine> agents = GetSelectedMachineByTab();
+            foreach (Machine agent in agents)
+                Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.LiveConnect);
         }
 
         private void BtnConnectOriginalShared_Click(object sender, RoutedEventArgs e) {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            Launch(agent.Item1, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlShared);
+            List<Machine> agents = GetSelectedMachineByTab();
+            foreach (Machine agent in agents)
+                Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlShared);
         }
 
         private void BtnConnectOriginalPrivate_Click(object sender, RoutedEventArgs e) {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            Launch(agent.Item1, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlPrivate);
+            List<Machine> agents = GetSelectedMachineByTab();
+            foreach (Machine agent in agents)
+                Launch(agent, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlPrivate);
         }
 
         private void BtnConnectOriginalOneClick_Click(object sender, RoutedEventArgs e)
         {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            if (agent.Item1.OneClickAccess)
-                Launch(agent.Item1, (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlOneClick);
+            List<Machine> agents = GetSelectedMachineByTab();
+            if (agents.Count == 1 && agents[0].OneClickAccess)
+                Launch(agents[0], (useMITM ? LaunchMethod.DirectKaseyaMITM : LaunchMethod.DirectKaseya), LaunchAction.RemoteControlOneClick);
         }
 
         #endregion Buttons: Launch
@@ -448,15 +461,15 @@ namespace KLCEx {
         }
 
         private void MachineSelectionChangedFromTab() {
-            Tuple<Machine, int> agent = GetSelectedMachineByTab();
-            if (agent != null)
+            List<Machine> agents = GetSelectedMachineByTab();
+            if (agents.Count > 0)
             {
-                SetConnectButtons(true, agent.Item2, agent.Item1.OneClickAccess);
-                if(agent.Item2 == 1)
-                    DisplayMachineNote(agent.Item1);
+                SetConnectButtons(true, agents.Count, agents[0].OneClickAccess);
+                if(agents.Count == 1)
+                    DisplayMachineNote(agents[0]);
                 else
                     DisplayMachineNote(null);
-                //DisplayRCNotify(agent.Item1)
+                //DisplayRCNotify(agents[0])
             }
             else
             {
@@ -467,14 +480,14 @@ namespace KLCEx {
             model.ListAgentProcLog.Clear();
             model.ListAgentProcScheduled.Clear();
 
-            if (agent == null) {
+            if (agents.Count == 0) {
                 txtApMachineName.Content = "No machine";
                 txtApMachineGroup.Content = " selected to view.";
                 model.SelectedAgent = null;
             } else {
-                txtApMachineName.Content = agent.Item1.AgentNameOnly;
-                txtApMachineGroup.Content = "." + agent.Item1.MachineGroup;
-                model.SelectedAgent = agent.Item1;
+                txtApMachineName.Content = agents[0].AgentNameOnly;
+                txtApMachineGroup.Content = "." + agents[0].MachineGroup;
+                model.SelectedAgent = agents[0];
             }
         }
 
@@ -549,18 +562,18 @@ namespace KLCEx {
             bool v = (value && numSelected == 1);
             bool vOneClick = (IsOneClick && numSelected == 1);
 
-            btnConnectLaunch.IsEnabled = v;
+            btnConnectLaunch.IsEnabled = value;
             btnConnectShared.IsEnabled = v;
             btnConnectPrivate.IsEnabled = v;
             btnConnectOneClick.IsEnabled = vOneClick;
             btnSendToProxy.IsEnabled = value;
 
-            btnConnectAltLaunch.IsEnabled = v;
+            btnConnectAltLaunch.IsEnabled = value;
             btnConnectAltShared.IsEnabled = v;
             btnConnectAltPrivate.IsEnabled = v;
             btnConnectAltOneClick.IsEnabled = vOneClick;
 
-            btnConnectOriginalLiveConnect.IsEnabled = v;
+            btnConnectOriginalLiveConnect.IsEnabled = value;
             btnConnectOriginalShared.IsEnabled = v;
             btnConnectOriginalPrivate.IsEnabled = v;
             btnConnectOriginalOneClick.IsEnabled = vOneClick;

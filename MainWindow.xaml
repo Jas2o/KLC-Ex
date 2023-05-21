@@ -565,7 +565,11 @@
                         </Expander>
                     </Grid>
                 </TabItem>
-                <TabItem x:Name="tabRM" Header="RM">
+                <TabItem
+                    x:Name="tabRM"
+                    Header="RM"
+                    IsEnabled="False"
+                    Visibility="Collapsed">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
