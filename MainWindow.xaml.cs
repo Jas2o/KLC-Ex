@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -18,7 +19,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
 
-namespace KLCEx {
+namespace KLC_Ex {
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -36,7 +37,8 @@ namespace KLCEx {
             model = new ViewModel();
             this.DataContext = model;
             InitializeComponent();
-            txtVersion.Text = Properties.Resources.BuildDate.Trim();
+
+            txtVersion.Text = KLC_Ex.Properties.Resources.BuildDate.Trim();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e) {
@@ -54,7 +56,7 @@ namespace KLCEx {
             /*
             string savedAuthToken = KaseyaAuth.GetStoredAuth();
             string[] args = Environment.GetCommandLineArgs();
-            if (args.Length > 1 && args[1].Contains("klcex:"))
+            if (args.Length > 1 && args[1].Contains("KLC-Ex:"))
                 savedAuthToken = string.Join("", args[1].ToCharArray().Where(Char.IsDigit));
             if (savedAuthToken != null) {
                 authToken = savedAuthToken;
@@ -142,7 +144,7 @@ namespace KLCEx {
                 displayGWG = (agentDWG.Contains("(d") ? "Domain: " : "Workgroup: ") + agentDWG.Substring(0, agentDWG.IndexOf(" ("));
 
             MessageBoxResult result;
-            string[] arrAdmins = new string[] { "administrator", "brandadmin", "adminc", "company" };
+            string[] arrAdmins = new string[] {"administrator" };
             if (arrAdmins.Contains(displayUser.ToLower())) {
                 result = MessageBoxResult.Yes;
             } else {
@@ -211,7 +213,7 @@ namespace KLCEx {
 
         private void ConnectVSA() {
             //api/v1.0/system/machinegroups?$top=5&$filter=(substringof(%27ramvek%27,tolower(MachineGroupName))%20eq%20true)&$orderby=MachineGroupName%20asc
-            this.Title = "KLCExplorer - " + vsa;
+            this.Title = "KLC-Explorer - " + vsa;
             btnLoadToken.Content = "Loading...";
             btnLoadToken.Background = Brushes.Gold;
             SetConnectButtons(false);
@@ -381,7 +383,7 @@ namespace KLCEx {
 
                 foreach (AgentProcMHS apMHS in dataGridAgentsSchedule.SelectedItems) {
                     Process process = new Process();
-                    process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLCProxy.exe";
+                    process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLC-Proxy.exe";
                     process.StartInfo.Arguments = string.Format("{0}@{1}", apMHS.Machine.Guid, vsa);
                     process.Start();
                     process.WaitForExit(2000);
@@ -392,7 +394,7 @@ namespace KLCEx {
 
                 foreach (Machine agent in dataGridAgents.SelectedItems) {
                     Process process = new Process();
-                    process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLCProxy.exe";
+                    process.StartInfo.FileName = System.IO.Path.GetDirectoryName(Environment.ProcessPath) + @"\KLC-Proxy.exe";
                     process.StartInfo.Arguments = string.Format("{0}@{1}", agent.Guid, vsa);
                     process.Start();
                     process.WaitForExit(2000);

@@ -1,7 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 
-namespace KLCEx {
+namespace KLC_Ex {
 
     public class ViewModel : INotifyPropertyChanged {
         public ObservableCollection<VSAView> VSAViews { get; set; }

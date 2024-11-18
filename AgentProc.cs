@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KLCEx {
+namespace KLC_Ex {
     public class AgentProc {
 
         public string AgentProcedureId { get; private set; }
@@ -24,7 +24,7 @@ namespace KLCEx {
             //Attributes = child["Attributes"].ToString(); //Could be null, appears to be unused
 
             if(Path.StartsWith("Private/")) {
-                Path = Path.Replace("company/com/au/", "company.com.au_");
+                //Path = Path.Replace("company/com/au/", "company.com.au_");
                 int slash = Path.IndexOf('/', 8);
                 if (slash == -1)
                     Path = "Private";

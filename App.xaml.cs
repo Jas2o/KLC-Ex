@@ -10,7 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace KLCEx {
+namespace KLC_Ex {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>

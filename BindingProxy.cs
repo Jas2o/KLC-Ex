@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace KLCEx
+namespace KLC_Ex
 {
     //https://www.technical-recipes.com/2017/binding-the-visibility-of-datagridcolumn-in-wpf-mvvm/
 

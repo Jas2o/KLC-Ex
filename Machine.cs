@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KLCEx {
+namespace KLC_Ex {
     public class Machine {
 
         public enum AgentStatus {

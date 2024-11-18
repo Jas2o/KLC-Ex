@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KLCEx {
+namespace KLC_Ex {
     public class AgentProcHistory {
 
         public string ScriptName { get; private set; }

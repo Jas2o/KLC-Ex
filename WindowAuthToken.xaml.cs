@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 
-namespace KLCEx {
+namespace KLC_Ex {
     /// <summary>
     /// Interaction logic for WindowAuthToken.xaml
     /// </summary>

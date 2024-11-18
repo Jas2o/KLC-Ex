@@ -17,7 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace KLCEx
+namespace KLC_Ex
 {
     /// <summary>
     /// Interaction logic for WindowRCLogs.xaml
