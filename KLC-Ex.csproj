@@ -14,8 +14,11 @@
     <OutputPath>..\Build\Release\</OutputPath>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Rocket4.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\Rocket4.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <Content Include="Resources\Rocket4.ico" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Notes.txt" />
     <Resource Include="Rocket4.ico" />
