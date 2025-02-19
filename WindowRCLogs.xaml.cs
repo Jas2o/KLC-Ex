@@ -68,7 +68,7 @@ namespace KLC_Ex {
                                 query += "?$top=50&$filter=endswith(MachineGroup,%20'" + root + "')&$orderby=AgentName%20asc&$skip=" + num;
                             else
                                 query += "?$top=50&$filter=(MachineGroupId%20eq%20" + group.GroupId + "M)&$orderby=AgentName%20asc&$skip=" + num;
-                            IRestResponse response = Kaseya.GetRequest(vsa, query);
+                            RestResponse response = Kaseya.GetRequest(vsa, query);
 
                             dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
                             if (result["Status"] != "OK")
@@ -96,7 +96,7 @@ namespace KLC_Ex {
                     do {
                         string query = "api/v1.0/assetmgmt/agents?$top=50&$filter=substringof('" + line + "',%20ComputerName)&$orderby=AgentName%20asc&$skip=" + num;
 
-                        IRestResponse response = Kaseya.GetRequest(vsa, query);
+                        RestResponse response = Kaseya.GetRequest(vsa, query);
 
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
                         if (result["Status"] != "OK")
@@ -144,7 +144,7 @@ namespace KLC_Ex {
                 await _semaphore.WaitAsync();
 
                 try {
-                    IRestResponse responseLogs = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/logs/" + machine.Key + "/remotecontrol?$orderby=LastActiveTime desc&$top=10");
+                    RestResponse responseLogs = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/logs/" + machine.Key + "/remotecontrol?$orderby=LastActiveTime desc&$top=10");
 
                     if (responseLogs.StatusCode == System.Net.HttpStatusCode.OK) {
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseLogs.Content);

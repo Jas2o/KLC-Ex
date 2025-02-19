@@ -174,7 +174,7 @@ namespace KLC_Ex {
             int records = 0;
             int num = 0;
             do {
-                IRestResponse response = Kaseya.GetRequest(vsa, "api/v1.0/system/machinegroups?$orderby=MachineGroupName%20asc&$skip=" + num);
+                RestResponse response = Kaseya.GetRequest(vsa, "api/v1.0/system/machinegroups?$orderby=MachineGroupName%20asc&$skip=" + num);
                 dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
                 records = (int)result["TotalRecords"];
                 foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
@@ -185,7 +185,7 @@ namespace KLC_Ex {
                 num += 100;
             } while (num < records);
 
-            IRestResponse response2 = Kaseya.GetRequest(vsa, "api/v1.0/system/views");
+            RestResponse response2 = Kaseya.GetRequest(vsa, "api/v1.0/system/views");
             dynamic result2 = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response2.Content);
             //records = (int)result["TotalRecords"];
             foreach (Newtonsoft.Json.Linq.JObject child in result2["Result"].Children()) {
@@ -297,7 +297,7 @@ namespace KLC_Ex {
                         }
                     }
 
-                    IRestResponse response = Kaseya.GetRequest(vsa, query);
+                    RestResponse response = Kaseya.GetRequest(vsa, query);
 
                     dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
                     if (result["Status"] != "OK")
@@ -586,7 +586,7 @@ namespace KLC_Ex {
                 model.VSAViews.Add(new VSAView("", "< No View >"));
             });
 
-            IRestResponse response = Kaseya.GetRequest(vsa, "api/v1.0/system/views");
+            RestResponse response = Kaseya.GetRequest(vsa, "api/v1.0/system/views");
             dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response.Content);
             //records = (int)result["TotalRecords"];
             foreach (Newtonsoft.Json.Linq.JObject child in result["Result"].Children()) {
@@ -635,7 +635,7 @@ namespace KLC_Ex {
 
                 int totalRecords = 0;
                 int skip = 0;
-                IRestResponse response;
+                RestResponse response;
                 do {
                     response = Kaseya.GetRequest(vsa, "api/v1.0/automation/agentprocs?$top=100&$orderby=AgentProcedureName%20asc" + (skip > 0 ? "&$skip=" + skip : ""));
 
@@ -732,15 +732,15 @@ namespace KLC_Ex {
             txtApMachineName.Content = agent.AgentNameOnly;
             txtApMachineGroup.Content = "." + agent.MachineGroup;
 
-            IRestResponse responseHistory = Kaseya.GetRequest(vsa, "api/v1.0/automation/agentprocs/" + agent.Guid + "/history?$top=25&$orderby=LastExecutionTime%20desc");
+            RestResponse responseHistory = Kaseya.GetRequest(vsa, "api/v1.0/automation/agentprocs/" + agent.Guid + "/history?$top=25&$orderby=LastExecutionTime%20desc");
             dynamic resultHistory = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseHistory.Content);
             //int totalRecords = (int)result["TotalRecords"];
 
-            IRestResponse responseScheduled = Kaseya.GetRequest(vsa, "api/v1.0/automation/agentprocs/" + agent.Guid + "/scheduledprocs?$top=25&$orderby=NextExecTime%20desc");
+            RestResponse responseScheduled = Kaseya.GetRequest(vsa, "api/v1.0/automation/agentprocs/" + agent.Guid + "/scheduledprocs?$top=25&$orderby=NextExecTime%20desc");
             dynamic resultScheduled = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseScheduled.Content);
             //int totalRecords = (int)result["TotalRecords"];
 
-            IRestResponse responseLogs = Kaseya.GetRequest(vsa, "api/v1.0/assetmgmt/logs/" + agent.Guid + "/agentprocedure?$top=25&$orderby=LastExecution%20desc");
+            RestResponse responseLogs = Kaseya.GetRequest(vsa, "api/v1.0/assetmgmt/logs/" + agent.Guid + "/agentprocedure?$top=25&$orderby=LastExecution%20desc");
             dynamic resultLogs = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseLogs.Content);
             //int totalRecords = (int)result["TotalRecords"];
 
@@ -771,8 +771,8 @@ namespace KLC_Ex {
 
             //BackgroundWorker bw = new BackgroundWorker();
             //bw.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args) {
-            //IRestResponse responseSchedule;
-            //IRestResponse responseHistory;
+            //RestResponse responseSchedule;
+            //RestResponse responseHistory;
             //foreach (Machine machine in model.ListMachine) {
 
             List<Task> tasks = model.ListMachine.Select(async machine => {
@@ -781,7 +781,7 @@ namespace KLC_Ex {
                 AgentProcScheduled scheduled = null;
 
                 try {    
-                    IRestResponse responseSchedule = await Kaseya.GetRequestAsync(vsa, "api/v1.0/automation/agentprocs/" + machine.Guid + "/scheduledprocs?$filter=AgentProcedureId eq " + agentProc.AgentProcedureId);
+                    RestResponse responseSchedule = await Kaseya.GetRequestAsync(vsa, "api/v1.0/automation/agentprocs/" + machine.Guid + "/scheduledprocs?$filter=AgentProcedureId eq " + agentProc.AgentProcedureId);
                     if (responseSchedule.StatusCode == System.Net.HttpStatusCode.OK) {
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseSchedule.Content);
                         int records = (int)result["TotalRecords"];
@@ -795,7 +795,7 @@ namespace KLC_Ex {
                         }
                     }
 
-                    IRestResponse responseHistory = await Kaseya.GetRequestAsync(vsa, "api/v1.0/automation/agentprocs/" + machine.Guid + "/history?$top=1&$filter=ScriptName eq '" + agentProc.AgentProcedureName + "'&$orderby=LastExecutionTime desc");
+                    RestResponse responseHistory = await Kaseya.GetRequestAsync(vsa, "api/v1.0/automation/agentprocs/" + machine.Guid + "/history?$top=1&$filter=ScriptName eq '" + agentProc.AgentProcedureName + "'&$orderby=LastExecutionTime desc");
                     if (responseHistory.StatusCode == System.Net.HttpStatusCode.OK) {
                         dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseHistory.Content);
                         //int records = (int)result["TotalRecords"];
@@ -850,8 +850,8 @@ namespace KLC_Ex {
 
             BackgroundWorker bw = new BackgroundWorker();
             bw.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args) {
-                IRestResponse responseSchedule;
-                IRestResponse responseHistory;
+                RestResponse responseSchedule;
+                RestResponse responseHistory;
 
                 AgentProc agentProc = model.SelectedAgentProc;
                 for (int i = 0; i < model.ListAgentProcMHS.Count; i++) {
@@ -934,7 +934,7 @@ namespace KLC_Ex {
 
                     try
                     {
-                        IRestResponse responseSummary = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/audit/" + machine.Guid + "/summary");
+                        RestResponse responseSummary = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/audit/" + machine.Guid + "/summary");
 
                         
                         if (responseSummary.StatusCode == System.Net.HttpStatusCode.OK)
@@ -966,7 +966,7 @@ namespace KLC_Ex {
                             }
                         }
 
-                        IRestResponse responseSecurity = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/audit/" + machine.Guid + "/software/securityproducts");
+                        RestResponse responseSecurity = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/audit/" + machine.Guid + "/software/securityproducts");
                         if (responseSecurity.StatusCode == System.Net.HttpStatusCode.OK)
                         {
                             dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseSecurity.Content);
@@ -999,7 +999,7 @@ namespace KLC_Ex {
                             }
                         }
 
-                        IRestResponse responsePatch = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/patch/" + machine.Guid + "/machineupdate/false?$filter=SchedTogether gt 0");
+                        RestResponse responsePatch = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/patch/" + machine.Guid + "/machineupdate/false?$filter=SchedTogether gt 0");
                         if (responseSecurity.StatusCode == System.Net.HttpStatusCode.OK)
                         {
                             dynamic result = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responsePatch.Content);
@@ -1054,7 +1054,7 @@ namespace KLC_Ex {
 
                 try
                 {
-                    IRestResponse responseLogs = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/logs/" + machine.Guid + "/remotecontrol?$orderby=LastActiveTime desc&$top=10");
+                    RestResponse responseLogs = await Kaseya.GetRequestAsync(vsa, "api/v1.0/assetmgmt/logs/" + machine.Guid + "/remotecontrol?$orderby=LastActiveTime desc&$top=10");
 
 
                     if (responseLogs.StatusCode == System.Net.HttpStatusCode.OK)
