@@ -6,6 +6,8 @@ The main reason this exists is because KLC-Proxy and KLC-Finch did not replicate
 ## Usage
 Typically, KLC-Ex is launched by KLC-Proxy rather than directly.
 
+![Screenshot of KLC-Ex](/Resources/KLC-Ex-Blank.png?raw=true)
+
 ## Required other repos to build
 - LibKaseya
 - LibKaseyaAuth
