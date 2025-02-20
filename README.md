@@ -1,20 +1,17 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+# KLC-Ex 
+Ex (Explorer) is an alternative frontend to Kaseya VSA 9.5's web browser Agents interface written in C#. It was functional up to VSA 9.5.20 however will not receive any further VSA testing/development.
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+The main reason this exists is because KLC-Proxy and KLC-Finch did not replicate the Agent browse/search feature that Kaseya Live Connect has and sometimes the VSA web interface did not perform well for me when I needed to rapidly switch between machines in different organisations or check agent procedure statuses.
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+## Usage
+Typically, KLC-Ex is launched by KLC-Proxy rather than directly.
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+## Required other repos to build
+- LibKaseya
+- LibKaseyaAuth
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+## Required packages to build
+- CredentialManagement.Standard
+- Newtonsoft.Json
+- nucs.JsonSettings
+- RestSharp
